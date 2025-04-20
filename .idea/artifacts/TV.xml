@@ -1,0 +1,6 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="TV">
+    <output-path>$PROJECT_DIR$/out/artifacts/TV</output-path>
+    <root id="root" />
+  </artifact>
+</component>

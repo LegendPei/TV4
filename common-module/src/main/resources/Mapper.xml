@@ -1,0 +1,306 @@
+<mappers>
+    <!-- 用户表相关操作 -->
+    <mapper namespace="UserMapper">
+        <insert id="insertUser">
+            INSERT INTO users (user_name, user_account, user_password)
+            VALUES (#{userName}, #{userAccount}, #{userPassword})
+        </insert>
+        <select id="selectUserById" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_id = #{userId}
+        </select>
+        <update id="updateUser">
+            UPDATE users
+            <set>
+                <if test="userName != null">user_name = #{userName},</if>
+                <if test="userAccount != null">user_account = #{userAccount},</if>
+                <if test="userPassword != null">user_password = #{userPassword},</if>
+            </set>
+            WHERE user_id = #{userId}
+        </update>
+        <delete id="deleteUserById">
+            DELETE FROM users WHERE user_id = #{userId}
+        </delete>
+        <select id="selectUserByAccountAndPassword" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_account = #{account}
+        </select>
+        <select id="selectUserByAccount" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_account = #{account}
+        </select>
+        <update id="incrementUserFollows">
+            UPDATE users
+            SET user_follows = user_follows + 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="lowUserFollows">
+            UPDATE users
+            SET user_follows = user_follows - 1
+            WHERE user_id = #{userId}
+        </update>
+    </mapper>
+
+    <!-- 商铺表相关操作 -->
+    <mapper namespace="ShopMapper">
+        <insert id="insertShop">
+            INSERT INTO shops (shop_name, shop_account, shop_password, shop_info, shop_address)
+            VALUES (#{shopName}, #{shopAccount}, #{shopPassword}, #{shopInfo},#{shopAddress})
+        </insert>
+        <select id="selectShopById" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_id = #{shopId}
+        </select>
+        <update id="updateShop">
+            UPDATE shops
+            <set>
+                <if test="shopName != null">shop_name = #{shopName},</if>
+                <if test="shopAccount != null">shop_account = #{shopAccount},</if>
+                <if test="shopPassword != null">shop_password = #{shopPassword},</if>
+                <if test="shopInfo != null">shop_info = #{shopInfo},</if>
+                <if test="shopAddress != null">shop_address = #{shopAddress},</if>
+            </set>
+            WHERE shop_id = #{shopId}
+        </update>
+        <delete id="deleteShopById">
+            DELETE FROM shops WHERE shop_id = #{shopId}
+        </delete>
+        <select id="selectShopByAccountAndPassword" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_account = #{shopAccount}
+        </select>
+        <select id="selectShopByAccount" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_account = #{shopAccount}
+        </select>
+        <update id="incrementShopLikes">
+            UPDATE shops
+            SET shop_likes = shop_likes + 1
+            WHERE shop_id = #{shopId}
+        </update>
+        <update id="incrementShopFollows">
+            UPDATE shops
+            SET shop_follows = shop_follows + 1
+            WHERE shop_id = #{shopId}
+        </update>
+        <update id="lowShopFollows">
+            UPDATE shops
+            SET shop_follows = shop_follows - 1
+            WHERE shop_id = #{shopId}
+        </update>
+    </mapper>
+
+    <!-- 评论表相关操作 -->
+    <mapper namespace="CommentMapper">
+        <insert id="insertComment">
+            INSERT INTO comments (commenter_id, target_id, comment_content)
+            VALUES (#{commenterId}, #{targetId}, #{commentContent})
+        </insert>
+        <select id="selectCommentById" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            comment_id = #{commentId}
+        </select>
+        <delete id="deleteCommentById">
+            DELETE FROM comments WHERE comment_id = #{commentId}
+        </delete>
+        <select id="selectCommentsByCommenterId" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            commenter_id = #{commenterId}
+        </select>
+        <select id="selectCommentsByTargetId" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            target_id = #{targetId}
+        </select>
+        <update id="incrementCommentLikes">
+            UPDATE comments
+            SET comment_likes = comment_likes + 1
+            WHERE comment_id = #{commentId}
+        </update>
+    </mapper>
+
+    <!-- 评论点赞表相关操作 -->
+    <mapper namespace="CommentsLikesMapper">
+        <insert id="insertCommentsLike">
+            INSERT INTO comment_likes (comment_id, comment_like_id)
+            VALUES (#{targetId}, #{likerId})
+        </insert>
+
+        <select id="selectCommentsLikesByCommentId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            comment_id AS targetId,
+            comment_like_id AS likerId,
+            comment_like_time AS likeTime
+            FROM
+            comment_likes
+            WHERE
+            comment_id = #{targetId}
+        </select>
+
+        <select id="selectCommentsLikesByCommentLikeId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            comment_id AS targetId,
+            comment_like_id AS likerId,
+            comment_like_time AS likeTime
+            FROM
+            comment_likes
+            WHERE
+            comment_like_id = #{likerId}
+        </select>
+    </mapper>
+
+    <!-- 商铺点赞表相关操作 -->
+    <mapper namespace="ShopsLikesMapper">
+        <insert id="insertShopsLike">
+            INSERT INTO shop_likes (shop_id, shop_like_id)
+            VALUES (#{targetId}, #{likerId})
+        </insert>
+
+        <select id="selectShopsLikesByShopId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            shop_id AS targetId,
+            shop_like_time AS likeTime,
+            shop_like_id AS likerId
+            FROM
+            shop_likes
+            WHERE
+            shop_id = #{targetId}
+        </select>
+
+        <select id="selectShopsLikesByShopLikeId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            shop_id AS targetId,
+            shop_like_time AS likeTime,
+            shop_like_id AS likerId
+            FROM
+            shop_likes
+            WHERE
+            shop_like_id = #{likerId}
+        </select>
+    </mapper>
+
+    <!-- 关注表相关操作 -->
+    <mapper namespace="FollowMapper">
+        <insert id="insertFollow">
+            INSERT INTO follows (target_id, follower_id)
+            VALUES (#{targetId}, #{followerId})
+        </insert>
+
+        <delete id="deleteFollow">
+            DELETE FROM
+            follows
+            WHERE
+            target_id = #{targetId}
+            follower_id = #{followerId}
+        </delete>
+
+        <select id="selectFollowingShops" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            target_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            follows
+            WHERE
+            follower_id = #{followerId}
+        </select>
+
+        <select id="selectFollowingUsers" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            target_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            follows
+            WHERE
+            follower_id = #{followerId}
+        </select>
+    </mapper>
+</mappers>
