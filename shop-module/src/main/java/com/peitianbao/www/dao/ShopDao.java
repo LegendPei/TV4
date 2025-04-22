@@ -2,6 +2,8 @@ package com.peitianbao.www.dao;
 
 import com.peitianbao.www.model.po.ShopsPO;
 
+import java.util.List;
+
 /**
  * @author leg
  */
@@ -55,4 +57,31 @@ public interface ShopDao {
      * @return 是否增加成功
      */
     boolean incrementShopLikes(Integer shopId);
+
+    /**
+     * 根据商铺id减少其的点赞数
+     * @param shopId 商铺id
+     * @return 是否增加成功
+     */
+    boolean lowShopLikes(Integer shopId);
+
+    /**
+     * 根据商铺id增加其的关注数
+     * @param shopId 商铺id
+     * @return 是否增加成功
+     */
+    boolean incrementShopFollows(Integer shopId);
+
+    /**
+     * 根据商铺id减少其的关注数
+     * @param shopId 商铺id
+     * @return 是否增加成功
+     */
+    boolean lowShopFollows(Integer shopId);
+
+    /**
+     * 查询所有商铺
+     * @return 所有商铺集合
+     */
+    List<ShopsPO> findAllShops();
 }

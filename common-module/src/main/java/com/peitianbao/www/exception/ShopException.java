@@ -4,6 +4,7 @@ package com.peitianbao.www.exception;
  * @author leg
  */
 public class ShopException extends ServiceException {
+
     public ShopException() {
     }
 

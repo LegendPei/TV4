@@ -1,8 +1,6 @@
 package com.peitianbao.www.springframework.ioc;
 
-import com.peitianbao.www.springframework.annontion.Autowired;
-import com.peitianbao.www.springframework.annontion.Dao;
-import com.peitianbao.www.springframework.annontion.Service;
+import com.peitianbao.www.springframework.annontion.*;
 import com.peitianbao.www.springframework.util.ClassScanner;
 
 import java.lang.reflect.Constructor;
@@ -25,34 +23,39 @@ public class BeanFactory {
 
     public static void initialize(String basePackage) {
         try {
-            // 扫描包路径下的所有类
+            //扫描包路径下的所有类
             List<Class<?>> classes = ClassScanner.getClasses(basePackage);
 
             for (Class<?> clazz : classes) {
                 if (clazz.isAnnotationPresent(Service.class)) {
+                    System.out.println("find Service：" + clazz.getName());
                     registerBean(clazz, clazz.getAnnotation(Service.class).value());
                 } else if (clazz.isAnnotationPresent(Dao.class)) {
+                    System.out.println("find Dao：" + clazz.getName());
                     registerBean(clazz, clazz.getAnnotation(Dao.class).value());
+                } else if (clazz.isAnnotationPresent(Controller.class)) {
+                    System.out.println("find controller: " + clazz.getName());
+                    registerBean(clazz, clazz.getSimpleName());
                 }
             }
 
-            // 处理 @Autowired 注解
+            //处理@Autowired注解
             processAutowiredAnnotations();
         } catch (Exception e) {
-            throw new RuntimeException("BeanFactory 初始化失败", e);
+            throw new RuntimeException("BeanFactory failed", e);
         }
     }
 
     public static void registerBean(Class<?> clazz, String beanName) throws Exception {
         if (MAP.containsKey(beanName)) {
-            // 如果实例已经存在，直接返回
+            //如果实例已经存在，直接返回
             return;
         }
 
         Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         Constructor<?> injectableConstructor = null;
 
-        // 查找带有 @Autowired 注解的构造函数
+        //查找带有@Autowired注解的构造函数
         for (Constructor<?> constructor : constructors) {
             if (constructor.isAnnotationPresent(Autowired.class)) {
                 injectableConstructor = constructor;
@@ -62,7 +65,7 @@ public class BeanFactory {
 
         Object instance;
         if (injectableConstructor != null) {
-            // 构造函数注入
+            //构造函数注入
             Class<?>[] parameterTypes = injectableConstructor.getParameterTypes();
             Object[] args = new Object[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
@@ -70,13 +73,13 @@ public class BeanFactory {
             }
             instance = injectableConstructor.newInstance(args);
         } else {
-            // 默认无参构造函数
+            //默认无参构造函数
             instance = clazz.getDeclaredConstructor().newInstance();
         }
 
         MAP.put(beanName, instance);
 
-        // 如果实现了接口，绑定到 INTERFACE_MAP
+        //如果实现了接口，绑定到INTERFACE_MAP
         for (Class<?> iFace : clazz.getInterfaces()) {
             INTERFACE_MAP.put(iFace, instance);
         }
@@ -85,7 +88,7 @@ public class BeanFactory {
     public static void registerBean(Class<?> clazz, String beanName, Object instance) {
         MAP.put(beanName, instance);
 
-        // 如果实现了接口，绑定到 INTERFACE_MAP
+        //如果实现了接口，绑定到INTERFACE_MAP
         for (Class<?> iFace : clazz.getInterfaces()) {
             INTERFACE_MAP.put(iFace, instance);
         }
@@ -95,14 +98,14 @@ public class BeanFactory {
         for (Object bean : MAP.values()) {
             Class<?> clazz = bean.getClass();
 
-            // 注入字段
+            //注入字段
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Autowired.class)) {
                     field.setAccessible(true);
                     Class<?> fieldType = field.getType();
                     Object dependency = findBeanByType(fieldType);
                     if (dependency == null) {
-                        throw new RuntimeException("无法找到类型为 " + fieldType.getName() + " 的 Bean");
+                        throw new RuntimeException("can not find " + fieldType.getName() + " Bean");
                     }
                     field.set(bean, dependency);
                 }

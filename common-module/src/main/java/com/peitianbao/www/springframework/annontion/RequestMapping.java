@@ -13,6 +13,6 @@ import java.lang.annotation.Target;
 public @interface RequestMapping {
     //URL 映射路径
     String value();
-    // HTTP 请求方法类型，默认为 GET
+    //HTTP请求方法类型，默认为 GET
     RequestMethod methodType() default RequestMethod.GET;
 }

@@ -9,6 +9,7 @@ import com.peitianbao.www.util.SqlSession;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -169,6 +170,19 @@ public class ShopDaoImpl implements ShopDao {
     }
 
     @Override
+    public List<ShopsPO> findAllShops(){
+        try {
+            Map<String, Object> params = new HashMap<>();
+            //执行查询
+            return sqlSession.executeQueryForList("ShopMapper.selectShop",params,ShopsPO.class);
+        } catch (Exception e) {
+            LoggingFramework.severe("搜索商铺失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            return null;
+        }
+    }
+
+    @Override
     public boolean incrementShopLikes(Integer shopId) {
         try {
             Map<String, Object> params = new HashMap<>();
@@ -186,6 +200,69 @@ public class ShopDaoImpl implements ShopDao {
             LoggingFramework.severe("更新商铺点赞数失败：" + e.getMessage());
             LoggingFramework.logException(e);
             throw new RuntimeException("更新商铺点赞数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowShopLikes(Integer shopId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("shopId", shopId);
+
+            LoggingFramework.info("尝试更新商铺点赞数：shopId = " + shopId);
+            int result = sqlSession.executeUpdate("ShopMapper.lowShopLikes", params);
+            if (result > 0) {
+                LoggingFramework.info("商铺点赞数更新成功：shopId = " + shopId);
+            } else {
+                LoggingFramework.warning("商铺点赞数更新失败：shopId = " + shopId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("更新商铺点赞数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("更新商铺点赞数失败", e);
+        }
+    }
+
+    @Override
+    public boolean incrementShopFollows(Integer shopId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("shopId", shopId);
+
+            LoggingFramework.info("尝试更新商铺关注数：shopId = " + shopId);
+            int result = sqlSession.executeUpdate("ShopMapper.incrementShopFollows", params);
+            if (result > 0) {
+                LoggingFramework.info("商铺关注数更新成功：shopId = " + shopId);
+            } else {
+                LoggingFramework.warning("商铺关注数更新失败：shopId = " + shopId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("更新商铺关注数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("更新商铺关注数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowShopFollows(Integer shopId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("shopId", shopId);
+
+            LoggingFramework.info("尝试更新商铺关注数：shopId = " + shopId);
+            int result = sqlSession.executeUpdate("ShopMapper.lowShopFollows", params);
+            if (result > 0) {
+                LoggingFramework.info("商铺关注数更新成功：shopId = " + shopId);
+            } else {
+                LoggingFramework.warning("商铺关注数更新失败：shopId = " + shopId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("更新商铺关注数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("更新商铺关注数失败", e);
         }
     }
 }

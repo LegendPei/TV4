@@ -60,4 +60,28 @@ public class JwtUtil {
             return null;
         }
     }
+
+    /**
+     * 从Token中解析出userId
+     */
+    public static Integer parseUserIdFromToken(String token) {
+        try {
+            //验证并解析Token
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey()) //验证签名
+                    .build()
+                    .parseSignedClaims(token)    //解析Token
+                    .getPayload();               //获取负载
+
+            //从Subject中提取userId
+            String subject = claims.getSubject();
+            if (subject == null || subject.isEmpty()) {
+                throw new IllegalArgumentException("Token subject is empty");
+            }
+
+            return Integer.parseInt(subject);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

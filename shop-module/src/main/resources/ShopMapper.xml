@@ -1,0 +1,101 @@
+<mappers>
+    <!-- 商铺表相关操作 -->
+    <mapper namespace="ShopMapper">
+        <insert id="insertShop">
+            INSERT INTO shops (shop_name, shop_account, shop_password, shop_info, shop_address)
+            VALUES (#{shopName}, #{shopAccount}, #{shopPassword}, #{shopInfo},#{shopAddress})
+        </insert>
+        <select id="selectShopById" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_id = #{shopId}
+        </select>
+        <update id="updateShop">
+            UPDATE shops
+            <set>
+                <if test="shopName != null">shop_name = #{shopName},</if>
+                <if test="shopAccount != null">shop_account = #{shopAccount},</if>
+                <if test="shopPassword != null">shop_password = #{shopPassword},</if>
+                <if test="shopInfo != null">shop_info = #{shopInfo},</if>
+                <if test="shopAddress != null">shop_address = #{shopAddress},</if>
+            </set>
+            WHERE shop_id = #{shopId}
+        </update>
+        <delete id="deleteShopById">
+            DELETE FROM shops WHERE shop_id = #{shopId}
+        </delete>
+        <select id="selectShopByAccountAndPassword" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_account = #{shopAccount}
+        </select>
+        <select id="selectShop" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+        </select>
+        <select id="selectShopByAccount" resultType="com.peitianbao.www.model.po.ShopsPO">
+            SELECT
+            shop_id AS shopId,
+            shop_name AS shopName,
+            shop_account AS shopAccount,
+            shop_password AS shopPassword,
+            shop_address AS shopAddress,
+            shop_info AS shopInfo,
+            shop_likes AS shopLikes,
+            shop_followers AS shopFollowers
+            FROM
+            shops
+            WHERE
+            shop_account = #{shopAccount}
+        </select>
+        <update id="incrementShopLikes">
+            UPDATE shops
+            SET shop_likes = shop_likes + 1
+            WHERE shop_id = #{shopId}
+        </update>
+        <update id="lowShopLikes">
+            UPDATE shops
+            SET shop_likes = shop_likes - 1
+            WHERE shop_id = #{shopId}
+        </update>
+        <update id="incrementShopFollows">
+            UPDATE shops
+            SET shop_follows = shop_follows + 1
+            WHERE shop_id = #{shopId}
+        </update>
+        <update id="lowShopFollows">
+            UPDATE shops
+            SET shop_follows = shop_follows - 1
+            WHERE shop_id = #{shopId}
+        </update>
+    </mapper>
+</mappers>
