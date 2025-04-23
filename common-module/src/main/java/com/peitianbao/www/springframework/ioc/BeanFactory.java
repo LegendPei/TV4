@@ -23,39 +23,39 @@ public class BeanFactory {
 
     public static void initialize(String basePackage) {
         try {
-            //扫描包路径下的所有类
+            // 扫描包路径下的所有类
             List<Class<?>> classes = ClassScanner.getClasses(basePackage);
 
             for (Class<?> clazz : classes) {
                 if (clazz.isAnnotationPresent(Service.class)) {
                     System.out.println("find Service：" + clazz.getName());
-                    registerBean(clazz, clazz.getAnnotation(Service.class).value());
+                    registerBean(clazz, clazz.getSimpleName());
                 } else if (clazz.isAnnotationPresent(Dao.class)) {
                     System.out.println("find Dao：" + clazz.getName());
-                    registerBean(clazz, clazz.getAnnotation(Dao.class).value());
+                    registerBean(clazz, clazz.getSimpleName());
                 } else if (clazz.isAnnotationPresent(Controller.class)) {
                     System.out.println("find controller: " + clazz.getName());
                     registerBean(clazz, clazz.getSimpleName());
                 }
             }
 
-            //处理@Autowired注解
+            // 处理 @Autowired 注解
             processAutowiredAnnotations();
         } catch (Exception e) {
-            throw new RuntimeException("BeanFactory failed", e);
+            throw new RuntimeException("BeanFactory 初始化失败", e);
         }
     }
 
     public static void registerBean(Class<?> clazz, String beanName) throws Exception {
         if (MAP.containsKey(beanName)) {
-            //如果实例已经存在，直接返回
+            // 如果实例已经存在，直接返回
             return;
         }
 
         Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         Constructor<?> injectableConstructor = null;
 
-        //查找带有@Autowired注解的构造函数
+        // 查找带有 @Autowired 注解的构造函数
         for (Constructor<?> constructor : constructors) {
             if (constructor.isAnnotationPresent(Autowired.class)) {
                 injectableConstructor = constructor;
@@ -65,7 +65,7 @@ public class BeanFactory {
 
         Object instance;
         if (injectableConstructor != null) {
-            //构造函数注入
+            // 构造函数注入
             Class<?>[] parameterTypes = injectableConstructor.getParameterTypes();
             Object[] args = new Object[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
@@ -73,13 +73,14 @@ public class BeanFactory {
             }
             instance = injectableConstructor.newInstance(args);
         } else {
-            //默认无参构造函数
+            // 默认无参构造函数
             instance = clazz.getDeclaredConstructor().newInstance();
         }
 
+        // 注册实现类
         MAP.put(beanName, instance);
 
-        //如果实现了接口，绑定到INTERFACE_MAP
+        // 如果实现了接口，绑定到 INTERFACE_MAP
         for (Class<?> iFace : clazz.getInterfaces()) {
             INTERFACE_MAP.put(iFace, instance);
         }
@@ -88,7 +89,7 @@ public class BeanFactory {
     public static void registerBean(Class<?> clazz, String beanName, Object instance) {
         MAP.put(beanName, instance);
 
-        //如果实现了接口，绑定到INTERFACE_MAP
+        // 如果实现了接口，绑定到 INTERFACE_MAP
         for (Class<?> iFace : clazz.getInterfaces()) {
             INTERFACE_MAP.put(iFace, instance);
         }
@@ -98,7 +99,7 @@ public class BeanFactory {
         for (Object bean : MAP.values()) {
             Class<?> clazz = bean.getClass();
 
-            //注入字段
+            // 注入字段
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Autowired.class)) {
                     field.setAccessible(true);
@@ -114,14 +115,18 @@ public class BeanFactory {
     }
 
     private static Object findBeanByType(Class<?> type) {
+        // 如果是具体类，直接从 MAP 中查找
+        for (Object instance : MAP.values()) {
+            if (type.isAssignableFrom(instance.getClass())) {
+                return instance;
+            }
+        }
+
+        // 如果是接口，尝试从 INTERFACE_MAP 中查找
         if (type.isInterface()) {
             return INTERFACE_MAP.get(type);
         }
-        for (Object bean : MAP.values()) {
-            if (type.isAssignableFrom(bean.getClass())) {
-                return bean;
-            }
-        }
+
         return null;
     }
 

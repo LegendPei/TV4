@@ -12,8 +12,8 @@ import java.io.IOException;
 /**
  * @author leg
  */
-@WebFilter(filterName = "ShopTokenFilter", urlPatterns = "/ShopService/*")
-public class ShopTokenFilter implements Filter {
+@WebFilter(filterName = "UserTokenFilter", urlPatterns = "/UserService/*")
+public class UserTokenFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -24,8 +24,8 @@ public class ShopTokenFilter implements Filter {
         //获取请求路径
         String path = request.getRequestURI();
 
-        //跳过
-        if (path.endsWith("/login")|| path.endsWith("/register")|| path.endsWith("/list")|| path.endsWith("/info")) {
+        //跳过登录接口
+        if (path.endsWith("/login")|| path.endsWith("/register")|| path.endsWith("/info")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -44,15 +44,15 @@ public class ShopTokenFilter implements Filter {
             return;
         }
 
-        //解析Token获取shopId
-        Integer shopId = JwtUtil.parseUserIdFromToken(token);
-        if (shopId == null) {
+        //解析Token获取userId
+        Integer userId = JwtUtil.parseUserIdFromToken(token);
+        if (userId == null) {
             ResponseUtil.sendErrorResponse(response, 401, "Invalid or expired token");
             return;
         }
 
         //将shopId存入请求上下文
-        request.setAttribute("shopId", shopId);
+        request.setAttribute("userId", userId);
 
         //放行请求
         filterChain.doFilter(request, response);

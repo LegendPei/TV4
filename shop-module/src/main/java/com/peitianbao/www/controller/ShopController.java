@@ -109,14 +109,14 @@ public class ShopController {
         boolean result = shopService.shopUpdate(shopId,shopAccount, shopPassword, shopName, shopAddress, shopInfo);
 
         if (result) {
-            //注册成功，返回成功响应
+            //更新成功，返回成功响应
             Map<String, Object> responseData = Map.of(
-                    "message", "商铺成功注册"
+                    "message", "商铺成功更新"
             );
             ResponseUtil.sendSuccessResponse(resp, responseData);
         } else {
-            //注册失败，抛出异常
-            throw new ShopException("[400] 商铺的注册账号或名字已存在");
+            //更新失败，抛出异常
+            throw new ShopException("[400] 商铺的更新账号或名字已存在");
         }
     }
 
@@ -128,7 +128,7 @@ public class ShopController {
         //从请求上下文中获取shopId
         Integer shopId = (Integer) request.getAttribute("shopId");
         if (shopId == null) {
-            throw new ShopException("[401] 无法获取用户信息");
+            throw new ShopException("[401] 无法获取商铺信息");
         }
 
         //调用Service层进行注销

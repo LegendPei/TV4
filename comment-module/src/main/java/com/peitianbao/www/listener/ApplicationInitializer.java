@@ -28,11 +28,11 @@ public class ApplicationInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("try to begin");
+        System.out.println("comment try to begin");
 
         try {
             if (initialized) {
-                System.out.println("ApplicationInitializer have begin");
+                System.out.println("Comment ApplicationInitializer have begin");
                 return;
             }
 
@@ -78,7 +78,7 @@ public class ApplicationInitializer implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("turning off shop service");
+        System.out.println("turning off comment service");
         //关闭连接池和其他资源
         try {
             //获取连接池实例

@@ -6,6 +6,7 @@ import com.peitianbao.www.exception.UserException;
 import com.peitianbao.www.model.dto.UsersDTO;
 import com.peitianbao.www.model.po.UsersPO;
 import com.peitianbao.www.springframework.annontion.Autowired;
+import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.token.RedisUtil;
 
@@ -13,7 +14,8 @@ import com.peitianbao.www.util.token.RedisUtil;
  * @author leg
  */
 @Service
-public class UserService {
+@DubboService
+public class UserService implements com.peitianbao.www.api.UserService {
 
     @Autowired
     private UserDao userDao;
@@ -139,5 +141,200 @@ public class UserService {
         }
 
         return new UsersDTO(userPo);
+    }
+
+    /**
+     * 增加用户被关注数
+     */
+    @Override
+    public boolean incrementUserFollowers(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.incrementUserFollowers(userId);
+        if (!result) {
+            throw new UserException("用户增加被关注失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowers();
+        user.setFollowers(currentFollows + 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
+    }
+
+    /**
+     * 减少用户被关注数
+     */
+    @Override
+    public boolean lowUserFollowers(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.lowUserFollowers(userId);
+        if (!result) {
+            throw new UserException("用户减少被关注失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowers();
+        if (currentFollows <= 0) {
+            throw new UserException("关注数不能为负数");
+        }
+        user.setFollowers(currentFollows - 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
+    }
+
+    /**
+     * 增加用户关注用户数
+     */
+    @Override
+    public boolean incrementFollowingUsers(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.incrementFollowingUsers(userId);
+        if (!result) {
+            throw new UserException("用户增加关注用户失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowingUsers();
+        user.setFollowingUsers(currentFollows + 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
+    }
+
+    /**
+     * 减少用户关注用户数
+     */
+    @Override
+    public boolean lowFollowingUsers(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.lowFollowingUsers(userId);
+        if (!result) {
+            throw new UserException("用户减少关注用户失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowingUsers();
+        if (currentFollows <= 0) {
+            throw new UserException("关注数不能为负数");
+        }
+        user.setFollowingUsers(currentFollows - 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
+    }
+
+    /**
+     * 增加用户关注商铺数
+     */
+    @Override
+    public boolean incrementFollowingShops(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.incrementFollowingShops(userId);
+        if (!result) {
+            throw new UserException("用户增加关注商铺失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowingShops();
+        user.setFollowingShops(currentFollows + 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
+    }
+
+    /**
+     * 减少用户关注商铺数
+     */
+    @Override
+    public boolean lowFollowingShops(Integer userId) {
+        //更新数据库中的关注数
+        boolean result = userDao.lowFollowingShops(userId);
+        if (!result) {
+            throw new UserException("用户减少关注商铺失败");
+        }
+
+        String cacheKey = USER_INFO_PREFIX + userId;
+
+        String cachedUserJson = RedisUtil.get(cacheKey);
+        UsersPO user;
+        if (cachedUserJson != null) {
+            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            user = userDao.showUserInfo(userId);
+            if (user == null) {
+                throw new UserException("用户信息不存在");
+            }
+        }
+
+        int currentFollows = user.getFollowingShops();
+        if (currentFollows <= 0) {
+            throw new UserException("关注数不能为负数");
+        }
+        user.setFollowingShops(currentFollows - 1);
+        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+
+        return true;
     }
 }

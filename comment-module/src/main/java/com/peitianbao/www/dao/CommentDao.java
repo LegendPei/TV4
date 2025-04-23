@@ -44,4 +44,18 @@ public interface CommentDao {
      * @return 排序后的评论集合
      */
     List<Comments> selectCommentsByTargetId(Integer targetId,String sortMode);
+
+    /**
+     * 增加评论点赞数
+     * @param commentId 评论id
+     * @return 是否成功
+     */
+    boolean incrementCommentLikes(Integer commentId);
+
+    /**
+     * 减少评论点赞数
+     * @param commentId 评论id
+     * @return 是否成功
+     */
+    boolean lowCommentLikes(Integer commentId);
 }

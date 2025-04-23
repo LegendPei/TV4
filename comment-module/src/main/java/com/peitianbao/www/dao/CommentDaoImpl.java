@@ -95,7 +95,7 @@ public class CommentDaoImpl implements CommentDao {
                 LoggingFramework.warning("未找到评论人 ID：" + commenterId);
             }
 
-            return comments;
+            return sortComments(comments, sortMode);
         } catch (Exception e) {
             LoggingFramework.severe("查询评论失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -118,11 +118,53 @@ public class CommentDaoImpl implements CommentDao {
             } else {
                 LoggingFramework.warning("未找到被评论对象 ID：" + targetId);
             }
-            return comments;
+            return sortComments(comments, sortMode);
         } catch (Exception e) {
             LoggingFramework.severe("查询评论失败：" + e.getMessage());
             LoggingFramework.logException(e);
             return null;
+        }
+    }
+
+    @Override
+    public boolean incrementCommentLikes(Integer commentId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("commentId", commentId);
+
+            LoggingFramework.info("尝试更新评论点赞数：commentId = " + commentId);
+            int result = sqlSession.executeUpdate("CommentMapper.incrementCommentLikes", params);
+            if (result > 0) {
+                LoggingFramework.info("评论点赞数更新成功：commentId = " + commentId);
+            } else {
+                LoggingFramework.warning("评论点赞数更新失败：commentId = " + commentId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("更新评论点赞数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("更新评论点赞数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowCommentLikes(Integer commentId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("commentId", commentId);
+
+            LoggingFramework.info("尝试更新评论点赞数：commentId = " + commentId);
+            int result = sqlSession.executeUpdate("CommentMapper.lowCommentLikes", params);
+            if (result > 0) {
+                LoggingFramework.info("评论点赞数更新成功：commentId = " + commentId);
+            } else {
+                LoggingFramework.warning("评论点赞数更新失败：commentId = " + commentId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("更新评论点赞数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("更新评论点赞数失败", e);
         }
     }
 

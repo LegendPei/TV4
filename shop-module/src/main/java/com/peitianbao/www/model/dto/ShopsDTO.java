@@ -5,13 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author leg
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShopsDTO {
+public class ShopsDTO implements Serializable {
     private Integer shopId;
     private String shopName;
     private String shopAccount;

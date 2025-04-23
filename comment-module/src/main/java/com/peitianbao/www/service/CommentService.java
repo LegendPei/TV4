@@ -6,6 +6,7 @@ import com.peitianbao.www.dao.CommentDao;
 import com.peitianbao.www.exception.CommentException;
 import com.peitianbao.www.model.Comments;
 import com.peitianbao.www.springframework.annontion.Autowired;
+import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.token.RedisUtil;
 
@@ -15,16 +16,17 @@ import java.util.List;
  * @author leg
  */
 @Service
-public class CommentService {
+@DubboService
+public class CommentService implements com.peitianbao.www.api.CommentService {
 
     @Autowired
     private CommentDao commentDao;
 
-    // 缓存前缀
+    //缓存前缀
     private static final String COMMENT_INFO_PREFIX = "comment:info:";
     private static final String COMMENTS_BY_TARGET_PREFIX = "comments:byTarget:";
 
-    // 缓存过期时间（单位：秒）
+    //缓存过期时间（单位：秒）
     private static final int CACHE_EXPIRE_SECONDS = 3600;
 
     /**
@@ -123,6 +125,71 @@ public class CommentService {
             return commentsList;
         } else {
             throw new CommentException("传入的排序信息有误");
+        }
+    }
+
+    /**
+     * 增加评论点赞数
+     */
+    @Override
+    public boolean incrementCommentLikes(Integer commentId) {
+        String cacheKey = COMMENT_INFO_PREFIX + commentId;
+
+        String cachedCommentJson = RedisUtil.get(cacheKey);
+        Comments comment;
+        if (cachedCommentJson != null) {
+            comment = new Gson().fromJson(cachedCommentJson, Comments.class);
+        } else {
+            comment = commentDao.selectCommentByCommentId(commentId);
+            if (comment == null) {
+                throw new CommentException("评论不存在");
+            }
+        }
+
+        //更新点赞数
+        comment.setCommentLikes(comment.getCommentLikes() + 1);
+
+        //更新数据库
+        boolean result = commentDao.incrementCommentLikes(commentId);
+        if (result) {
+            //更新缓存
+            RedisUtil.set(cacheKey, new Gson().toJson(comment), CACHE_EXPIRE_SECONDS);
+            return true;
+        } else {
+            throw new CommentException("更新点赞数失败");
+        }
+    }
+
+    /**
+     * 减少评论点赞数
+     */
+    @Override
+    public boolean lowCommentLikes(Integer commentId) {
+        String cacheKey = COMMENT_INFO_PREFIX + commentId;
+
+        String cachedCommentJson = RedisUtil.get(cacheKey);
+        Comments comment;
+        if (cachedCommentJson != null) {
+            comment = new Gson().fromJson(cachedCommentJson, Comments.class);
+        } else {
+            comment = commentDao.selectCommentByCommentId(commentId);
+            if (comment == null) {
+                throw new CommentException("评论不存在");
+            }
+        }
+
+        if (comment.getCommentLikes() <= 0) {
+            throw new CommentException("点赞数不能为负");
+        }
+
+        comment.setCommentLikes(comment.getCommentLikes() - 1);
+
+        boolean result = commentDao.lowCommentLikes(commentId);
+        if (result) {
+            RedisUtil.set(cacheKey, new Gson().toJson(comment), CACHE_EXPIRE_SECONDS);
+            return true;
+        } else {
+            throw new CommentException("更新点赞数失败");
         }
     }
 }

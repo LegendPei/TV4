@@ -12,6 +12,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SortRequest implements Serializable {
-    String sortType;
+public class FindAllUserCommentsRequest implements Serializable {
+    private Comments comments;
+    private SortRequest sortRequest;
 }

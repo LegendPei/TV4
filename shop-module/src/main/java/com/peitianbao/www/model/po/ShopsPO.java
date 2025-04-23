@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author leg
  */
@@ -13,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("users")
-public class ShopsPO {
+public class ShopsPO implements Serializable {
     @Column("shop_id")
     private Integer shopId;
     @Column("shop_name")

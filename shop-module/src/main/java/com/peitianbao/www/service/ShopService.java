@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
 /**
  * @author leg
  */
-@DubboService
 @Service
+@DubboService
 public class ShopService implements com.peitianbao.www.api.ShopService {
     @Autowired
     private ShopDao shopDao;
@@ -239,7 +239,7 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     }
 
     /**
-     * 商铺关注数加一
+     * 商铺关注数减一
      */
     @Override
     public boolean lowShopFollows(Integer shopId) {
@@ -273,7 +273,7 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     }
 
     /**
-     * 商铺关注数减一
+     * 商铺关注数加一
      */
     @Override
     public boolean incrementShopFollows(Integer shopId) {

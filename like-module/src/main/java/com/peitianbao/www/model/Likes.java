@@ -4,6 +4,7 @@ import com.peitianbao.www.mybatis.annotation.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @NoArgsConstructor
-public class Likes {
+public class Likes implements Serializable {
     private Integer targetId;
     private Integer likerId;
     private LocalDateTime likeTime;

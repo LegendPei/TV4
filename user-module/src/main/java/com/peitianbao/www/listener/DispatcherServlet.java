@@ -1,11 +1,12 @@
-package com.peitianbao.www.controller;
+package com.peitianbao.www.listener;
 
 import com.google.gson.Gson;
+import com.peitianbao.www.exception.UserException;
 import com.peitianbao.www.springframework.annontion.Controller;
 import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
-import com.peitianbao.www.springframework.ioc.ApplicationInitializer;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
+import com.peitianbao.www.util.ResponseUtil;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,15 +23,13 @@ import java.util.stream.Collectors;
 /**
  * @author leg
  */
-@WebServlet("/*")
+@WebServlet("/UserService/*")
 public class DispatcherServlet extends HttpServlet {
+
     private final Map<String, Method> handlerMappings = new HashMap<>();
 
     @Override
     public void init() {
-        // 初始化应用程序
-        ApplicationInitializer.initialize();
-
         // 解析 @RequestMapping 注解，生成 URL 映射
         for (Object bean : BeanFactory.getMap().values()) {
             Class<?> clazz = bean.getClass();
@@ -39,10 +39,12 @@ public class DispatcherServlet extends HttpServlet {
                         RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                         String url = requestMapping.value();
                         handlerMappings.put(url, method);
+                        System.out.println("find url：" + url + " == " + method.getName());
                     }
                 }
             }
         }
+        System.out.println("DispatcherServlet initialized with handler mappings: " + handlerMappings.size());
     }
 
     @Override
@@ -53,46 +55,63 @@ public class DispatcherServlet extends HttpServlet {
             path = path.substring(req.getContextPath().length());
         }
 
-        // 获取请求方法
-        String httpMethod = req.getMethod();
-
         // 查找对应的方法
         Method method = handlerMappings.get(path);
         if (method == null) {
-            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            resp.getWriter().write("404 Not Found");
-            return;
-        }
-
-        // 验证请求方法是否匹配
-        RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
-        if (!requestMapping.methodType().name().equalsIgnoreCase(httpMethod)) {
-            resp.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-            resp.getWriter().write("405 Method Not Allowed");
-            return;
-        }
-
-        // 获取对应的 Controller
-        String controllerName = method.getDeclaringClass().getSimpleName();
-        controllerName = controllerName.substring(0, 1).toLowerCase() + controllerName.substring(1);
-        Object controller = BeanFactory.getBean(controllerName);
-
-        if (controller == null) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("Internal Server Error: Controller not found");
+            ResponseUtil.sendErrorResponse(resp, 404, "Not Found");
             return;
         }
 
         try {
+            // 验证请求方法是否匹配
+            RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
+            if (!requestMapping.methodType().name().equalsIgnoreCase(req.getMethod())) {
+                ResponseUtil.sendErrorResponse(resp, 405, "Method Not Allowed");
+                return;
+            }
+
+            // 获取对应的 Controller
+            String controllerName = method.getDeclaringClass().getSimpleName();
+            controllerName = controllerName.substring(0, 1).toLowerCase() + controllerName.substring(1);
+            Object controller = BeanFactory.getBean(controllerName);
+
+            if (controller == null) {
+                ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: Controller not found");
+                return;
+            }
+
             // 处理方法参数
             Object[] args = resolveMethodArguments(method, req);
 
             // 调用方法并返回结果
             Object result = method.invoke(controller, args);
-            resp.getWriter().write(result.toString());
+
+            // 发送成功响应
+            ResponseUtil.sendSuccessResponse(resp, result);
+        } catch (InvocationTargetException e) {
+            // 捕获目标方法抛出的异常
+            Throwable cause = e.getCause();
+            if (cause instanceof UserException userException) {
+                handleShopException(resp, userException);
+            } else {
+                ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + cause.getMessage());
+            }
         } catch (Exception e) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().write("Internal Server Error: " + e.getMessage());
+            ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 处理 ShopException
+     */
+    private void handleShopException(HttpServletResponse resp, UserException userException) throws IOException {
+        String message = userException.getMessage();
+        if (message != null && message.matches("^\\[\\d{3}].*")) {
+            int code = Integer.parseInt(message.substring(1, 4));
+            String errorMessage = message.substring(6).trim();
+            ResponseUtil.sendErrorResponse(resp, code, errorMessage);
+        } else {
+            ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + message);
         }
     }
 
@@ -119,10 +138,8 @@ public class DispatcherServlet extends HttpServlet {
 
             if (hasRequestBody) {
                 // 使用 Gson 解析请求体中的 JSON 数据
-                //JSON数据中的字段名要和实体类的字段名一一对应
-                Gson gson = new Gson();
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-                args[i] = gson.fromJson(json, paramType);
+                args[i] = new Gson().fromJson(json, paramType);
             } else {
                 throw new RuntimeException("Unsupported parameter type or missing @MyRequestBody");
             }

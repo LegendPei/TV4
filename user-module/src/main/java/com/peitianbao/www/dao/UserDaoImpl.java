@@ -182,4 +182,130 @@ public class UserDaoImpl implements UserDao {
             return null;
         }
     }
+
+    @Override
+    public boolean incrementUserFollowers(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户被关注数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.incrementUserFollowers", params);
+            if (result > 0) {
+                LoggingFramework.info("用户被关注更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户被关注更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户被关注失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户被关注数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowUserFollowers(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户被关注数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.lowUserFollowers", params);
+            if (result > 0) {
+                LoggingFramework.info("用户被关注更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户被关注更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户被关注失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户被关注数失败", e);
+        }
+    }
+
+    @Override
+    public boolean incrementFollowingUsers(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户关注用户数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.incrementFollowingUsers", params);
+            if (result > 0) {
+                LoggingFramework.info("用户关注用户更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户关注用户更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户关注用户数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户关注用户数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowFollowingUsers(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户关注用户数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.lowFollowingUsers", params);
+            if (result > 0) {
+                LoggingFramework.info("用户关注用户更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户关注用户更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户关注用户数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户关注用户数失败", e);
+        }
+    }
+
+    @Override
+    public boolean incrementFollowingShops(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户关注商铺数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.incrementFollowingShops", params);
+            if (result > 0) {
+                LoggingFramework.info("用户关注商铺更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户关注商铺更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户关注商铺数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户关注商铺数失败", e);
+        }
+    }
+
+    @Override
+    public boolean lowFollowingShops(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("userId", userId);
+
+            LoggingFramework.info("尝试更新用户关注商铺数：userId = " + userId);
+            int result = sqlSession.executeUpdate("UserMapper.lowFollowingShops", params);
+            if (result > 0) {
+                LoggingFramework.info("用户关注商铺更新成功：userId = " + userId);
+            } else {
+                LoggingFramework.warning("用户关注商铺更新失败：userId = " + userId);
+            }
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("用户关注商铺数失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new RuntimeException("用户关注商铺数失败", e);
+        }
+    }
 }
