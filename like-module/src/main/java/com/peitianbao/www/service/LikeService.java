@@ -32,25 +32,35 @@ public class LikeService {
     private static final int CACHE_EXPIRE_SECONDS = 3600;
 
     /**
-     * 点赞
+     * 商铺插入点赞
      */
-    public boolean like(Integer targetId, Integer likerId) {
+    public boolean shopLike(Integer targetId, Integer likerId) {
         Likes likes = new Likes(targetId, likerId);
-        boolean result;
-        boolean result1=false;
-        if (targetId < 100000) {
-            result = likeDao.insertCommentLike(likes);
-        } else {
-            result = likeDao.insertShopLike(likes);
-            result1 = shopService.incrementShopLikes(targetId);
-        }
 
-        if (result&&result1) {
+        boolean result = likeDao.insertShopLike(likes);
+
+        if (result) {
             //更新缓存
             updateLikesCache(targetId);
             return true;
         } else {
-            throw new LikeException("点赞失败");
+            throw new LikeException("商铺点赞失败");
+        }
+    }
+
+    /**
+     * 评论插入点赞
+     */
+    public boolean commentLike(Integer targetId, Integer likerId) {
+        Likes likes = new Likes(targetId, likerId);
+        boolean result = likeDao.insertCommentLike(likes);
+
+        if (result) {
+            //更新缓存
+            updateLikesCache(targetId);
+            return true;
+        } else {
+            throw new LikeException("评论点赞失败");
         }
     }
 

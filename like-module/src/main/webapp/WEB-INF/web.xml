@@ -4,24 +4,35 @@
          http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-    <!-- 定义 Dubbo 和 Nacos 配置 -->
+    <!-- 消费者端配置 -->
     <context-param>
         <param-name>dubbo.application.name</param-name>
-        <param-value>like-service</param-value>
+        <param-value>consumer-application</param-value>
     </context-param>
     <context-param>
         <param-name>dubbo.registry.address</param-name>
         <param-value>nacos://127.0.0.1:8848</param-value>
     </context-param>
+
+    <!-- Shop Service 提供者配置 -->
     <context-param>
-        <param-name>dubbo.protocol.name</param-name>
-        <param-value>dubbo</param-value>
+        <param-name>shopService.dubbo.application.name</param-name>
+        <param-value>com.peitianbao.www.api.ShopService</param-value>
     </context-param>
     <context-param>
-        <param-name>dubbo.protocol.port</param-name>
+        <param-name>shop.dubbo.protocol.port</param-name>
         <param-value>20880</param-value>
     </context-param>
 
+    <!-- Comment Service 提供者配置 -->
+    <context-param>
+        <param-name>commentService.dubbo.application.name</param-name>
+        <param-value>com.peitianbao.www.api.CommentService</param-value>
+    </context-param>
+    <context-param>
+        <param-name>comment.dubbo.protocol.port</param-name>
+        <param-value>20882</param-value>
+    </context-param>
     <!-- 定义上下文监听器 -->
     <listener>
         <listener-class>com.peitianbao.www.listener.ApplicationInitializer</listener-class>

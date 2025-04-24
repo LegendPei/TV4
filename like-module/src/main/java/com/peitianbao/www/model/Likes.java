@@ -1,6 +1,5 @@
 package com.peitianbao.www.model;
 
-import com.peitianbao.www.mybatis.annotation.Column;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

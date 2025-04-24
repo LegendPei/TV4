@@ -1,6 +1,6 @@
 package com.peitianbao.www.listener;
 
-import com.peitianbao.www.springframework.annontion.DubboService;
+import com.peitianbao.www.springframework.annontion.DubboReference;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
 import com.peitianbao.www.springframework.util.ClassScanner;
 import com.peitianbao.www.util.ConnectionPool;
@@ -8,14 +8,14 @@ import com.peitianbao.www.util.LoadProperties;
 import com.peitianbao.www.util.LoggingFramework;
 import com.peitianbao.www.util.SqlSession;
 import org.apache.dubbo.config.ApplicationConfig;
-import org.apache.dubbo.config.ProtocolConfig;
+import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
-import org.apache.dubbo.config.ServiceConfig;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Properties;
 
@@ -28,7 +28,7 @@ public class ApplicationInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("try to begin");
+        System.out.println("like try to begin");
 
         try {
             if (initialized) {
@@ -36,40 +36,33 @@ public class ApplicationInitializer implements ServletContextListener {
                 return;
             }
 
-            //加载配置文件
+            // 加载配置文件
             Properties properties = LoadProperties.load("application.properties");
             for (String key : properties.stringPropertyNames()) {
                 System.setProperty(key, properties.getProperty(key));
             }
 
-            //初始化连接池
+            // 初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
-            //注册连接池到BeanFactory
             BeanFactory.registerBean(ConnectionPool.class, "connectionPool", connectionPool);
-            //创建SqlSession并注册到容器
+
+            // 创建 SqlSession 并注册到容器
             SqlSession sqlSession = new SqlSession(connectionPool);
             BeanFactory.registerBean(SqlSession.class, "sqlSession", sqlSession);
 
-            //初始化框架，扫描并注册所有Controller、Service和Dao
+            // 初始化框架，扫描并注册所有 Controller、Service 和 Dao
             BeanFactory.initialize("com.peitianbao.www");
 
-            //获取ServletContext
+            // 获取 ServletContext
             ServletContext context = sce.getServletContext();
 
-            //加载Dubbo和Nacos配置
-            String applicationName = context.getInitParameter("dubbo.application.name");
-            String registryAddress = context.getInitParameter("dubbo.registry.address");
-            String protocolName = context.getInitParameter("dubbo.protocol.name");
-            String protocolPort = context.getInitParameter("dubbo.protocol.port");
+            // 初始化 Dubbo 配置
+            initializeDubbo(context);
 
-            if (applicationName == null || registryAddress == null || protocolName == null || protocolPort == null) {
-                throw new RuntimeException("缺少必要的 Dubbo 配置，请检查 web.xml 文件");
-            }
+            // 处理 @DubboReference 注解的注入
+            processDubboReferenceAnnotations(context);
 
-            //初始化Dubbo配置
-            initializeDubbo(applicationName, registryAddress, protocolName, Integer.parseInt(protocolPort));
-
-            //标记为已初始化
+            // 标记为已初始化
             initialized = true;
         } catch (Exception e) {
             throw new RuntimeException("应用初始化失败", e);
@@ -78,10 +71,8 @@ public class ApplicationInitializer implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("turning off shop service");
-        //关闭连接池和其他资源
+        System.out.println("turning off like service");
         try {
-            //获取连接池实例
             ConnectionPool connectionPool = (ConnectionPool) BeanFactory.getBean("connectionPool");
             if (connectionPool != null) {
                 connectionPool.close();
@@ -92,59 +83,89 @@ public class ApplicationInitializer implements ServletContextListener {
         }
     }
 
-    private static void initializeDubbo(String applicationName, String registryAddress, String protocolName, int protocolPort) {
-        System.out.println("begin to Dubbo service");
+    /**
+     * 初始化 Dubbo 配置
+     */
+    private void initializeDubbo(ServletContext context) {
+        String applicationName = context.getInitParameter("dubbo.application.name");
+        String registryAddress = context.getInitParameter("dubbo.registry.address");
 
-        try {
-            //创建Dubbo配置对象
-            ApplicationConfig applicationConfig = new ApplicationConfig();
-            applicationConfig.setName(applicationName);
+        ApplicationConfig applicationConfig = new ApplicationConfig();
+        applicationConfig.setName(applicationName);
 
-            RegistryConfig registryConfig = new RegistryConfig();
-            registryConfig.setAddress(registryAddress);
+        RegistryConfig registryConfig = new RegistryConfig();
+        registryConfig.setAddress(registryAddress);
 
-            ProtocolConfig protocolConfig = new ProtocolConfig();
-            protocolConfig.setName(protocolName);
-            protocolConfig.setPort(protocolPort);
+        DubboBootstrap bootstrap = DubboBootstrap.getInstance();
+        bootstrap.application(applicationConfig)
+                .registry(registryConfig)
+                .start();
 
-            //初始化DubboBootstrap
-            DubboBootstrap bootstrap = DubboBootstrap.getInstance();
-            bootstrap.application(applicationConfig)
-                    .registry(registryConfig)
-                    .protocol(protocolConfig);
+        System.out.println("DubboBootstrap success to Nacos");
+    }
 
-            //扫描指定包路径下的类
-            List<Class<?>> classes = ClassScanner.getClasses("com.peitianbao.www.service");
+    /**
+     * 处理 @DubboReference 注解的注入
+     */
+    private void processDubboReferenceAnnotations(ServletContext context) throws Exception {
+        List<Class<?>> classes = ClassScanner.getClasses("com.peitianbao.www.controller");
 
-            for (Class<?> clazz : classes) {
-                if (clazz.isAnnotationPresent(DubboService.class)) {
-                    System.out.println("find DubboService:" + clazz.getName());
+        for (Class<?> clazz : classes) {
+            Object instance = BeanFactory.getBean(clazz.getSimpleName());
 
-                    //获取接口类型
-                    Class<?>[] interfaces = clazz.getInterfaces();
-                    if (interfaces.length == 0) {
-                        throw new RuntimeException("no find interface" + clazz.getName());
-                    }
-
-                    Class<?> interfaceClass = interfaces[0];
-
-                    //创建ServiceConfig并注册服务
-                    ServiceConfig<Object> service = new ServiceConfig<>();
-                    service.setInterface(interfaceClass);
-                    service.setRef(clazz.getDeclaredConstructor().newInstance());
-                    service.setVersion("1.0.0");
-
-                    //将服务添加到DubboBootstrap
-                    bootstrap.service(service);
-                    System.out.println("success Dubbo service:" + interfaceClass.getName());
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.isAnnotationPresent(DubboReference.class)) {
+                    handleDubboReferenceField(field, instance, context);
                 }
             }
-
-            //启动DubboBootstrap
-            bootstrap.start();
-            System.out.println("DubboBootstrap success to Nacos");
-        } catch (Exception e) {
-            throw new RuntimeException("Dubbo register failed", e);
         }
+    }
+
+    /**
+     * 处理单个 @DubboReference 注解字段
+     */
+    private void handleDubboReferenceField(Field field, Object bean, ServletContext context) throws Exception {
+        field.setAccessible(true);
+        Class<?> fieldType = field.getType();
+
+        DubboReference dubboReference = field.getAnnotation(DubboReference.class);
+        String serviceName = dubboReference.serviceName();
+        String version = dubboReference.version();
+
+        // 动态加载模块配置
+        String applicationName = getApplicationNameFromConfig(serviceName, context);
+        if (applicationName == null) {
+            throw new RuntimeException("未找到服务配置: " + serviceName);
+        }
+
+        // 使用 DubboBootstrap 创建远程服务代理
+        ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
+        referenceConfig.setInterface(fieldType);
+        referenceConfig.setVersion(version);
+
+        // 设置全局 DubboBootstrap 配置
+        DubboBootstrap bootstrap = DubboBootstrap.getInstance();
+        bootstrap.application(new ApplicationConfig(applicationName))
+                .registry(new RegistryConfig(getRegistryAddress(context)));
+
+        // 获取远程服务代理对象
+        Object proxyInstance = referenceConfig.get();
+
+        // 注入代理对象
+        field.set(bean, proxyInstance);
+    }
+
+    /**
+     * 根据服务名称获取应用名称
+     */
+    private String getApplicationNameFromConfig(String serviceName, ServletContext context) {
+        return context.getInitParameter(serviceName + ".dubbo.application.name");
+    }
+
+    /**
+     * 获取注册中心地址
+     */
+    private String getRegistryAddress(ServletContext context) {
+        return context.getInitParameter("dubbo.registry.address");
     }
 }

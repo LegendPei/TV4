@@ -1,7 +1,7 @@
 package com.peitianbao.www.listener;
 
 import com.google.gson.Gson;
-import com.peitianbao.www.exception.ShopException;
+import com.peitianbao.www.exception.LikeException;
 import com.peitianbao.www.springframework.annontion.Controller;
 import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author leg
  */
-@WebServlet("/ShopService/*")
+@WebServlet("/LikeService/*")
 public class DispatcherServlet extends HttpServlet {
 
     private final Map<String, Method> handlerMappings = new HashMap<>();
@@ -81,7 +81,7 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             // 处理方法参数
-            Object[] args = resolveMethodArguments(method, req);
+            Object[] args = resolveMethodArguments(method, req,resp);
 
             // 调用方法并返回结果
             Object result = method.invoke(controller, args);
@@ -91,8 +91,8 @@ public class DispatcherServlet extends HttpServlet {
         } catch (InvocationTargetException e) {
             // 捕获目标方法抛出的异常
             Throwable cause = e.getCause();
-            if (cause instanceof ShopException shopException) {
-                handleShopException(resp, shopException);
+            if (cause instanceof LikeException likeException) {
+                handleLikeException(resp, likeException);
             } else {
                 ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + cause.getMessage());
             }
@@ -102,10 +102,10 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     /**
-     * 处理 ShopException
+     * 处理 LikeException
      */
-    private void handleShopException(HttpServletResponse resp, ShopException shopException) throws IOException {
-        String message = shopException.getMessage();
+    private void handleLikeException(HttpServletResponse resp, LikeException likeException) throws IOException {
+        String message = likeException.getMessage();
         if (message != null && message.matches("^\\[\\d{3}].*")) {
             int code = Integer.parseInt(message.substring(1, 4));
             String errorMessage = message.substring(6).trim();
@@ -118,7 +118,7 @@ public class DispatcherServlet extends HttpServlet {
     /**
      * 解析方法参数
      */
-    private Object[] resolveMethodArguments(Method method, HttpServletRequest req) throws Exception {
+    private Object[] resolveMethodArguments(Method method, HttpServletRequest req, HttpServletResponse resp) throws Exception {
         Class<?>[] parameterTypes = method.getParameterTypes();
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
@@ -139,7 +139,18 @@ public class DispatcherServlet extends HttpServlet {
             if (hasRequestBody) {
                 // 使用 Gson 解析请求体中的 JSON 数据
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-                args[i] = new Gson().fromJson(json, paramType);
+                System.out.println("Request Body: " + json);
+                try {
+                    args[i] = new Gson().fromJson(json, paramType);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to parse request body: " + e.getMessage());
+                }
+            } else if (paramType.isAssignableFrom(HttpServletRequest.class)) {
+                // 如果是 HttpServletRequest 参数，直接赋值
+                args[i] = req;
+            } else if (paramType.isAssignableFrom(HttpServletResponse.class)) {
+                // 如果是 HttpServletResponse 参数，直接赋值
+                args[i] = resp;
             } else {
                 throw new RuntimeException("Unsupported parameter type or missing @MyRequestBody");
             }

@@ -148,7 +148,7 @@ public class ShopController {
     /**
      * 查询商铺信息
      */
-    @RequestMapping(value = "/info", methodType = RequestMethod.GET)
+    @RequestMapping(value = "/info", methodType = RequestMethod.POST)
     public void getShopInfo(@MyRequestBody ShopsDTO shopsDto, HttpServletResponse resp) throws IOException {
         //从请求上下文中获取shopId
         Integer shopId = shopsDto.getShopId();

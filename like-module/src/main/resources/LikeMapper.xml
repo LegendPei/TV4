@@ -1,0 +1,61 @@
+<mappers>
+    <!-- 评论点赞表相关操作 -->
+    <mapper namespace="CommentsLikesMapper">
+        <insert id="insertCommentsLike">
+            INSERT INTO comment_likes (comment_id, comment_like_id)
+            VALUES (#{targetId}, #{likerId})
+        </insert>
+
+        <select id="selectCommentsLikesByCommentId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            comment_id AS targetId,
+            comment_like_id AS likerId,
+            comment_like_time AS likeTime
+            FROM
+            comment_likes
+            WHERE
+            comment_id = #{targetId}
+        </select>
+
+        <select id="selectCommentsLikesByCommentLikeId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            comment_id AS targetId,
+            comment_like_id AS likerId,
+            comment_like_time AS likeTime
+            FROM
+            comment_likes
+            WHERE
+            comment_like_id = #{likerId}
+        </select>
+    </mapper>
+
+    <!-- 商铺点赞表相关操作 -->
+    <mapper namespace="ShopsLikesMapper">
+        <insert id="insertShopsLike">
+            INSERT INTO shop_likes (shop_id, shop_like_id)
+            VALUES (#{targetId}, #{likerId})
+        </insert>
+
+        <select id="selectShopsLikesByShopId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            shop_id AS targetId,
+            shop_like_time AS likeTime,
+            shop_like_id AS likerId
+            FROM
+            shop_likes
+            WHERE
+            shop_id = #{targetId}
+        </select>
+
+        <select id="selectShopsLikesByShopLikeId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            shop_id AS targetId,
+            shop_like_time AS likeTime,
+            shop_like_id AS likerId
+            FROM
+            shop_likes
+            WHERE
+            shop_like_id = #{likerId}
+        </select>
+    </mapper>
+</mappers>

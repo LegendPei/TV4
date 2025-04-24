@@ -140,7 +140,7 @@ public class UserController {
     /**
      * 查询用户信息
      */
-    @RequestMapping(value = "/info", methodType = RequestMethod.GET)
+    @RequestMapping(value = "/info", methodType = RequestMethod.POST)
     public void getUserInfo(@MyRequestBody UsersDTO usersDto, HttpServletResponse resp) throws IOException {
         //从请求上下文中获取userId
         Integer userId = usersDto.getUserId();

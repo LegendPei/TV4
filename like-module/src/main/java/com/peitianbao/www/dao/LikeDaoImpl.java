@@ -44,14 +44,10 @@ public class LikeDaoImpl implements LikeDao {
             params.put("commentId", commentsLike.getTargetId());
             params.put("commentLikeId", commentsLike.getLikerId());
 
-            Map<String, Object> param = new HashMap<>();
-            param.put("commentId", commentsLike.getTargetId());
-
             LoggingFramework.info("尝试插入点赞记录：" + commentsLike);
             int result = sqlSession.executeUpdate("CommentsLikesMapper.insertCommentsLike", params);
-            int result1 = sqlSession.executeUpdate("CommentMapper.incrementCommentLikes", param);
             LoggingFramework.info("点赞记录插入成功：" + commentsLike);
-            return result!=0&&result1!=0;
+            return result!=0;
         } catch (Exception e) {
             LoggingFramework.severe("插入点赞记录失败：" + e.getMessage());
             LoggingFramework.logException(e);

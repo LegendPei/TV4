@@ -52,7 +52,7 @@ public class CommentController {
     /**
      * 查询单条评论信息
      */
-    @RequestMapping(value = "/commentInfo",methodType = RequestMethod.GET)
+    @RequestMapping(value = "/commentInfo",methodType = RequestMethod.POST)
     public void commentInfo(@MyRequestBody Comments comments, HttpServletResponse resp)throws IOException {
         Integer commentId = comments.getCommentId();
 
@@ -104,7 +104,7 @@ public class CommentController {
     /**
      * 查询某用户的所有评论
      */
-    @RequestMapping(value="/findAllUserComments",methodType = RequestMethod.GET)
+    @RequestMapping(value="/findAllUserComments",methodType = RequestMethod.POST)
     public void findAllUserComments(@MyRequestBody FindAllUserCommentsRequest request, HttpServletResponse resp)throws IOException {
         Comments comment = request.getComments();
         SortRequest sortRequest = request.getSortRequest();
@@ -127,7 +127,7 @@ public class CommentController {
     /**
      * 查询某目标的所有评论
      */
-    @RequestMapping(value="/findAllShopComments",methodType = RequestMethod.GET)
+    @RequestMapping(value="/findAllShopComments",methodType = RequestMethod.POST)
     public void findAllShopComments(@MyRequestBody FindAllUserCommentsRequest request, HttpServletResponse resp)throws IOException {
         Comments comment = request.getComments();
         SortRequest sortRequest = request.getSortRequest();

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author leg
  */
-@WebServlet("/ShopService/*")
+@WebServlet("/*")
 public class DispatcherServlet extends HttpServlet {
 
     private final Map<String, Method> handlerMappings = new HashMap<>();
@@ -39,7 +39,7 @@ public class DispatcherServlet extends HttpServlet {
                         RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
                         String url = requestMapping.value();
                         handlerMappings.put(url, method);
-                        System.out.println("find url：" + url + " == " + method.getName());
+                        System.out.println("find url:" + url + " == " + method.getName());
                     }
                 }
             }
@@ -72,7 +72,6 @@ public class DispatcherServlet extends HttpServlet {
 
             // 获取对应的 Controller
             String controllerName = method.getDeclaringClass().getSimpleName();
-            controllerName = controllerName.substring(0, 1).toLowerCase() + controllerName.substring(1);
             Object controller = BeanFactory.getBean(controllerName);
 
             if (controller == null) {
@@ -81,7 +80,7 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             // 处理方法参数
-            Object[] args = resolveMethodArguments(method, req);
+            Object[] args = resolveMethodArguments(method, req, resp);
 
             // 调用方法并返回结果
             Object result = method.invoke(controller, args);
@@ -118,7 +117,7 @@ public class DispatcherServlet extends HttpServlet {
     /**
      * 解析方法参数
      */
-    private Object[] resolveMethodArguments(Method method, HttpServletRequest req) throws Exception {
+    private Object[] resolveMethodArguments(Method method, HttpServletRequest req, HttpServletResponse resp) throws Exception {
         Class<?>[] parameterTypes = method.getParameterTypes();
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
@@ -139,7 +138,18 @@ public class DispatcherServlet extends HttpServlet {
             if (hasRequestBody) {
                 // 使用 Gson 解析请求体中的 JSON 数据
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-                args[i] = new Gson().fromJson(json, paramType);
+                System.out.println("Request Body: " + json);
+                try {
+                    args[i] = new Gson().fromJson(json, paramType);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to parse request body: " + e.getMessage());
+                }
+            } else if (paramType.isAssignableFrom(HttpServletRequest.class)) {
+                // 如果是 HttpServletRequest 参数，直接赋值
+                args[i] = req;
+            } else if (paramType.isAssignableFrom(HttpServletResponse.class)) {
+                // 如果是 HttpServletResponse 参数，直接赋值
+                args[i] = resp;
             } else {
                 throw new RuntimeException("Unsupported parameter type or missing @MyRequestBody");
             }
