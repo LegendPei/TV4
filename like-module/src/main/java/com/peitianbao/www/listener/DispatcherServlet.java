@@ -7,6 +7,7 @@ import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
 import com.peitianbao.www.util.ResponseUtil;
+import com.peitianbao.www.util.GsonFactory;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * @author leg
  */
-@WebServlet("/LikeService/*")
+@WebServlet("/*")
 public class DispatcherServlet extends HttpServlet {
 
     private final Map<String, Method> handlerMappings = new HashMap<>();
@@ -72,7 +73,6 @@ public class DispatcherServlet extends HttpServlet {
 
             // 获取对应的 Controller
             String controllerName = method.getDeclaringClass().getSimpleName();
-            controllerName = controllerName.substring(0, 1).toLowerCase() + controllerName.substring(1);
             Object controller = BeanFactory.getBean(controllerName);
 
             if (controller == null) {
@@ -94,10 +94,10 @@ public class DispatcherServlet extends HttpServlet {
             if (cause instanceof LikeException likeException) {
                 handleLikeException(resp, likeException);
             } else {
-                ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + cause.getMessage());
+                ResponseUtil.sendErrorResponse(resp, 500, "1Internal Server Error: " + cause.getMessage());
             }
         } catch (Exception e) {
-            ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + e.getMessage());
+            ResponseUtil.sendErrorResponse(resp, 500, "2Internal Server Error: " + e.getMessage());
         }
     }
 
@@ -111,7 +111,7 @@ public class DispatcherServlet extends HttpServlet {
             String errorMessage = message.substring(6).trim();
             ResponseUtil.sendErrorResponse(resp, code, errorMessage);
         } else {
-            ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + message);
+            ResponseUtil.sendErrorResponse(resp, 500, "3Internal Server Error: " + message);
         }
     }
 
@@ -123,11 +123,13 @@ public class DispatcherServlet extends HttpServlet {
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
 
+        // 使用全局单例
+        Gson gson = GsonFactory.getGSON();
+
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> paramType = parameterTypes[i];
             Annotation[] annotations = parameterAnnotations[i];
 
-            // 检查是否有 @MyRequestBody 注解
             boolean hasRequestBody = false;
             for (Annotation annotation : annotations) {
                 if (annotation instanceof MyRequestBody) {
@@ -137,19 +139,15 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             if (hasRequestBody) {
-                // 使用 Gson 解析请求体中的 JSON 数据
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-                System.out.println("Request Body: " + json);
                 try {
-                    args[i] = new Gson().fromJson(json, paramType);
+                    args[i] = gson.fromJson(json, paramType);
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to parse request body: " + e.getMessage());
+                    throw new RuntimeException("Failed to parse request body: " + e.getMessage(), e);
                 }
             } else if (paramType.isAssignableFrom(HttpServletRequest.class)) {
-                // 如果是 HttpServletRequest 参数，直接赋值
                 args[i] = req;
             } else if (paramType.isAssignableFrom(HttpServletResponse.class)) {
-                // 如果是 HttpServletResponse 参数，直接赋值
                 args[i] = resp;
             } else {
                 throw new RuntimeException("Unsupported parameter type or missing @MyRequestBody");

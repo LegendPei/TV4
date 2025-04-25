@@ -10,26 +10,24 @@ import java.io.IOException;
  * @author leg
  */
 public class ResponseUtil {
-    /**
-     * 发送成功响应
-     */
     public static void sendSuccessResponse(HttpServletResponse resp, Object data) throws IOException {
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
+        Gson gson = GsonFactory.getGSON();
+
         ApiResponse response = new ApiResponse(200, "Success", data);
-        resp.getWriter().write(new Gson().toJson(response));
+        resp.getWriter().write(gson.toJson(response));
     }
 
-    /**
-     * 发送错误响应
-     */
     public static void sendErrorResponse(HttpServletResponse resp, int statusCode, String message) throws IOException {
         resp.setStatus(statusCode);
         resp.setContentType("application/json");
         resp.setCharacterEncoding("UTF-8");
 
+        Gson gson = GsonFactory.getGSON();
+
         ApiResponse response = new ApiResponse(statusCode, message, null);
-        resp.getWriter().write(new Gson().toJson(response));
+        resp.getWriter().write(gson.toJson(response));
     }
 }

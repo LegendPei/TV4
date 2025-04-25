@@ -1,13 +1,12 @@
 package com.peitianbao.www.listener;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.peitianbao.www.exception.UserException;
+import com.peitianbao.www.exception.FollowException;
 import com.peitianbao.www.springframework.annontion.Controller;
 import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
-import com.peitianbao.www.util.LocalDateTimeAdapter;
+import com.peitianbao.www.util.GsonFactory;
 import com.peitianbao.www.util.ResponseUtil;
 
 import javax.servlet.annotation.WebServlet;
@@ -18,7 +17,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,7 +31,7 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     public void init() {
-        // 解析 @RequestMapping 注解，生成 URL 映射
+        //解析@RequestMapping注解，生成URL映射
         for (Object bean : BeanFactory.getMap().values()) {
             Class<?> clazz = bean.getClass();
             if (clazz.isAnnotationPresent(Controller.class)) {
@@ -83,7 +81,7 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             // 处理方法参数
-            Object[] args = resolveMethodArguments(method, req, resp);
+            Object[] args = resolveMethodArguments(method, req,resp);
 
             // 调用方法并返回结果
             Object result = method.invoke(controller, args);
@@ -93,8 +91,8 @@ public class DispatcherServlet extends HttpServlet {
         } catch (InvocationTargetException e) {
             // 捕获目标方法抛出的异常
             Throwable cause = e.getCause();
-            if (cause instanceof UserException userException) {
-                handleShopException(resp, userException);
+            if (cause instanceof FollowException likeException) {
+                handleLikeException(resp, likeException);
             } else {
                 ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + cause.getMessage());
             }
@@ -104,10 +102,10 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     /**
-     * 处理 ShopException
+     * 处理 LikeException
      */
-    private void handleShopException(HttpServletResponse resp, UserException userException) throws IOException {
-        String message = userException.getMessage();
+    private void handleLikeException(HttpServletResponse resp, FollowException likeException) throws IOException {
+        String message = likeException.getMessage();
         if (message != null && message.matches("^\\[\\d{3}].*")) {
             int code = Integer.parseInt(message.substring(1, 4));
             String errorMessage = message.substring(6).trim();
@@ -125,16 +123,13 @@ public class DispatcherServlet extends HttpServlet {
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
 
-        // 创建并配置Gson实例，注册 LocalDateTime 适配器
-        Gson gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
-                .create();
+        // 使用全局单例
+        Gson gson = GsonFactory.getGSON();
 
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> paramType = parameterTypes[i];
             Annotation[] annotations = parameterAnnotations[i];
 
-            // 检查是否有 @MyRequestBody 注解
             boolean hasRequestBody = false;
             for (Annotation annotation : annotations) {
                 if (annotation instanceof MyRequestBody) {
@@ -144,12 +139,9 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             if (hasRequestBody) {
-                // 使用配置好的Gson实例解析请求体中的JSON数据
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-                System.out.println("Request Body: " + json);
                 try {
                     args[i] = gson.fromJson(json, paramType);
-                    System.out.println("Parsed argument: " + args[i]);
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to parse request body: " + e.getMessage(), e);
                 }

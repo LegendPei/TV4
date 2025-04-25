@@ -96,7 +96,7 @@ public class ApplicationInitializer implements ServletContextListener {
         System.out.println("begin to Dubbo service");
 
         try {
-            //创建Dubbo配置对象
+            // 创建 Dubbo 配置对象
             ApplicationConfig applicationConfig = new ApplicationConfig();
             applicationConfig.setName(applicationName);
 
@@ -107,44 +107,50 @@ public class ApplicationInitializer implements ServletContextListener {
             protocolConfig.setName(protocolName);
             protocolConfig.setPort(protocolPort);
 
-            //初始化DubboBootstrap
+            // 初始化 DubboBootstrap
             DubboBootstrap bootstrap = DubboBootstrap.getInstance();
             bootstrap.application(applicationConfig)
                     .registry(registryConfig)
                     .protocol(protocolConfig);
 
-            //扫描指定包路径下的类
+            // 扫描指定包路径下的类
             List<Class<?>> classes = ClassScanner.getClasses("com.peitianbao.www.service");
 
             for (Class<?> clazz : classes) {
                 if (clazz.isAnnotationPresent(DubboService.class)) {
-                    System.out.println("find DubboService:" + clazz.getName());
+                    System.out.println("find DubboService: " + clazz.getName());
 
-                    //获取接口类型
+                    // 获取接口类型
                     Class<?>[] interfaces = clazz.getInterfaces();
                     if (interfaces.length == 0) {
-                        throw new RuntimeException("no find interface" + clazz.getName());
+                        throw new RuntimeException("找不到接口: " + clazz.getName());
                     }
 
                     Class<?> interfaceClass = interfaces[0];
 
-                    //创建ServiceConfig并注册服务
+                    // 从 BeanFactory 获取 Service 实例
+                    Object serviceInstance = BeanFactory.getBean(clazz.getSimpleName());
+                    if (serviceInstance == null) {
+                        throw new RuntimeException("Service instance not found in BeanFactory: " + clazz.getName());
+                    }
+
+                    // 创建 ServiceConfig 并注册服务
                     ServiceConfig<Object> service = new ServiceConfig<>();
                     service.setInterface(interfaceClass);
-                    service.setRef(clazz.getDeclaredConstructor().newInstance());
+                    service.setRef(serviceInstance);
                     service.setVersion("1.0.0");
 
-                    //将服务添加到DubboBootstrap
+                    // 将服务添加到 DubboBootstrap
                     bootstrap.service(service);
-                    System.out.println("success Dubbo service:" + interfaceClass.getName());
+                    System.out.println("成功注册 Dubbo 服务: " + interfaceClass.getName());
                 }
             }
 
-            //启动DubboBootstrap
+            // 启动 DubboBootstrap
             bootstrap.start();
-            System.out.println("DubboBootstrap success to Nacos");
+            System.out.println("DubboBootstrap 成功启动并连接到 Nacos");
         } catch (Exception e) {
-            throw new RuntimeException("Dubbo register failed", e);
+            throw new RuntimeException("Dubbo 注册失败", e);
         }
     }
 }

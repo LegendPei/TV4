@@ -8,6 +8,7 @@ import com.peitianbao.www.model.Comments;
 import com.peitianbao.www.springframework.annontion.Autowired;
 import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.annontion.Service;
+import com.peitianbao.www.util.GsonFactory;
 import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
     //缓存过期时间（单位：秒）
     private static final int CACHE_EXPIRE_SECONDS = 3600;
 
+    private final Gson gson = GsonFactory.getGSON();
     /**
      * 插入评论
      */
@@ -53,14 +55,14 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
 
             Comments comment;
             if (cachedCommentJson != null) {
-                //从缓存中获取评论信息
-                comment = new Gson().fromJson(cachedCommentJson, Comments.class);
+                // 从缓存中获取评论信息
+                comment = gson.fromJson(cachedCommentJson, Comments.class);
             } else {
-                //从数据库中加载评论信息
+                // 从数据库中加载评论信息
                 comment = commentDao.selectCommentByCommentId(commentId);
                 if (comment != null) {
-                    //写入缓存
-                    RedisUtil.set(cacheKey, new Gson().toJson(comment), CACHE_EXPIRE_SECONDS);
+                    // 写入缓存
+                    RedisUtil.set(cacheKey, gson.toJson(comment), CACHE_EXPIRE_SECONDS);
                 }
             }
 
@@ -109,13 +111,13 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
             List<Comments> commentsList;
             if (cachedCommentsJson != null) {
                 // 从缓存中获取评论列表
-                commentsList = new Gson().fromJson(cachedCommentsJson, new TypeToken<List<Comments>>() {}.getType());
+                commentsList = gson.fromJson(cachedCommentsJson, new TypeToken<List<Comments>>() {}.getType());
             } else {
                 // 从数据库中加载评论列表
                 commentsList = commentDao.selectCommentsByTargetId(targetId, sortMode);
                 if (commentsList != null) {
                     // 写入缓存
-                    RedisUtil.set(cacheKey, new Gson().toJson(commentsList), CACHE_EXPIRE_SECONDS);
+                    RedisUtil.set(cacheKey, gson.toJson(commentsList), CACHE_EXPIRE_SECONDS);
                 }
             }
 
@@ -138,7 +140,7 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
         String cachedCommentJson = RedisUtil.get(cacheKey);
         Comments comment;
         if (cachedCommentJson != null) {
-            comment = new Gson().fromJson(cachedCommentJson, Comments.class);
+            comment = gson.fromJson(cachedCommentJson, Comments.class);
         } else {
             comment = commentDao.selectCommentByCommentId(commentId);
             if (comment == null) {
@@ -146,14 +148,14 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
             }
         }
 
-        //更新点赞数
+        // 更新点赞数
         comment.setCommentLikes(comment.getCommentLikes() + 1);
 
-        //更新数据库
+        // 更新数据库
         boolean result = commentDao.incrementCommentLikes(commentId);
         if (result) {
-            //更新缓存
-            RedisUtil.set(cacheKey, new Gson().toJson(comment), CACHE_EXPIRE_SECONDS);
+            // 更新缓存
+            RedisUtil.set(cacheKey, gson.toJson(comment), CACHE_EXPIRE_SECONDS);
             return true;
         } else {
             throw new CommentException("更新点赞数失败");
@@ -170,7 +172,7 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
         String cachedCommentJson = RedisUtil.get(cacheKey);
         Comments comment;
         if (cachedCommentJson != null) {
-            comment = new Gson().fromJson(cachedCommentJson, Comments.class);
+            comment = gson.fromJson(cachedCommentJson, Comments.class);
         } else {
             comment = commentDao.selectCommentByCommentId(commentId);
             if (comment == null) {
@@ -186,7 +188,7 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
 
         boolean result = commentDao.lowCommentLikes(commentId);
         if (result) {
-            RedisUtil.set(cacheKey, new Gson().toJson(comment), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(comment), CACHE_EXPIRE_SECONDS);
             return true;
         } else {
             throw new CommentException("更新点赞数失败");

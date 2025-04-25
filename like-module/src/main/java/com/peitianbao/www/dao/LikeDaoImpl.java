@@ -23,8 +23,8 @@ public class LikeDaoImpl implements LikeDao {
     public boolean insertShopLike(Likes likes) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("shopId", likes.getTargetId());
-            params.put("shopLikeId", likes.getLikerId());
+            params.put("targetId", likes.getTargetId());
+            params.put("likerId", likes.getLikerId());
 
             LoggingFramework.info("尝试插入商铺点赞记录：" + likes);
             int result = sqlSession.executeUpdate("ShopsLikesMapper.insertShopsLike", params);
@@ -41,8 +41,8 @@ public class LikeDaoImpl implements LikeDao {
     public boolean insertCommentLike(Likes commentsLike) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("commentId", commentsLike.getTargetId());
-            params.put("commentLikeId", commentsLike.getLikerId());
+            params.put("targetId", commentsLike.getTargetId());
+            params.put("likerId", commentsLike.getLikerId());
 
             LoggingFramework.info("尝试插入点赞记录：" + commentsLike);
             int result = sqlSession.executeUpdate("CommentsLikesMapper.insertCommentsLike", params);
@@ -59,7 +59,7 @@ public class LikeDaoImpl implements LikeDao {
     public List<Likes> selectShopLikes(Integer shopId) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("shopId", shopId);
+            params.put("targetId", shopId);
 
             LoggingFramework.info("尝试查询商铺 ID：" + shopId + " 的点赞记录");
             return sqlSession.executeQueryForList("ShopsLikesMapper.selectShopsLikesByShopId", params, Likes.class);
@@ -74,7 +74,7 @@ public class LikeDaoImpl implements LikeDao {
     public List<Likes> selectCommentLikes(Integer commentId) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("commentId", commentId);
+            params.put("targetId", commentId);
 
             LoggingFramework.info("尝试查询评论 ID：" + commentId + " 的点赞记录");
             return sqlSession.executeQueryForList("CommentsLikesMapper.selectCommentsLikesByCommentId", params, Likes.class);
@@ -89,7 +89,7 @@ public class LikeDaoImpl implements LikeDao {
     public List<Likes> selectUserLikesShops(Integer userId) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("shopLikeId", userId);
+            params.put("likerId", userId);
 
             LoggingFramework.info("尝试查询点赞人 ID：" + userId + " 的商铺点赞记录");
             return sqlSession.executeQueryForList("ShopsLikesMapper.selectShopsLikesByShopLikeId", params, Likes.class);
@@ -104,7 +104,7 @@ public class LikeDaoImpl implements LikeDao {
     public List<Likes> selectUserLikesComments(Integer userId) {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put("commentLikeId", userId);
+            params.put("likerId", userId);
 
             LoggingFramework.info("尝试查询点赞人 ID：" + userId + " 的点赞记录");
             return sqlSession.executeQueryForList("CommentsLikesMapper.selectCommentsLikesByCommentLikeId", params, Likes.class);

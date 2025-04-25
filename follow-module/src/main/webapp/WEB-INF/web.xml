@@ -1,0 +1,44 @@
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <!-- 消费者端配置 -->
+    <context-param>
+        <param-name>dubbo.application.name</param-name>
+        <param-value>follow-consumer</param-value>
+    </context-param>
+    <context-param>
+        <param-name>dubbo.registry.address</param-name>
+        <param-value>nacos://127.0.0.1:8848</param-value>
+    </context-param>
+    <context-param>
+        <param-name>dubbo.consumer.timeout</param-name>
+        <param-value>10000</param-value> <!-- 设置全局超时时间为 10 秒 -->
+    </context-param>
+
+    <!-- Shop Service 提供者配置 -->
+    <context-param>
+        <param-name>shopService.dubbo.application.name</param-name>
+        <param-value>com.peitianbao.www.api.ShopService</param-value>
+    </context-param>
+    <context-param>
+        <param-name>shop.dubbo.protocol.port</param-name>
+        <param-value>20880</param-value>
+    </context-param>
+
+    <!-- User Service 提供者配置 -->
+    <context-param>
+        <param-name>userService.dubbo.application.name</param-name>
+        <param-value>com.peitianbao.www.api.UserService</param-value>
+    </context-param>
+    <context-param>
+        <param-name>comment.dubbo.protocol.port</param-name>
+        <param-value>20881</param-value>
+    </context-param>
+    <!-- 定义上下文监听器 -->
+    <listener>
+        <listener-class>com.peitianbao.www.listener.ApplicationInitializer</listener-class>
+    </listener>
+</web-app>

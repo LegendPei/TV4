@@ -7,11 +7,15 @@
     <!-- 消费者端配置 -->
     <context-param>
         <param-name>dubbo.application.name</param-name>
-        <param-value>consumer-application</param-value>
+        <param-value>like-consumer</param-value>
     </context-param>
     <context-param>
         <param-name>dubbo.registry.address</param-name>
         <param-value>nacos://127.0.0.1:8848</param-value>
+    </context-param>
+    <context-param>
+        <param-name>dubbo.consumer.timeout</param-name>
+        <param-value>10000</param-value> <!-- 设置全局超时时间为 10 秒 -->
     </context-param>
 
     <!-- Shop Service 提供者配置 -->

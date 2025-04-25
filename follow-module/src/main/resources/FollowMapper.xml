@@ -1,0 +1,70 @@
+<mappers>
+    <!-- 关注表相关操作 -->
+    <mapper namespace="FollowMapper">
+        <insert id="insertUserFollow">
+            INSERT INTO user_follows (user_id, follower_id)
+            VALUES (#{targetId}, #{followerId})
+        </insert>
+
+        <insert id="insertShopFollow">
+            INSERT INTO shop_follows (shop_id, follower_id)
+            VALUES (#{targetId}, #{followerId})
+        </insert>
+
+        <delete id="deleteUserFollow">
+            DELETE FROM
+            user_follows
+            WHERE
+            user_id = #{targetId}
+            follower_id = #{followerId}
+        </delete>
+
+        <delete id="deleteShopFollow">
+            DELETE FROM
+            shop_follows
+            WHERE
+            shop_id = #{targetId}
+            follower_id = #{followerId}
+        </delete>
+
+        <select id="selectFollowingShops" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            shop_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            shop_follows
+            WHERE
+            follower_id = #{followerId}
+        </select>
+
+        <select id="selectFollowingUsers" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            user_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            user_follows
+            WHERE
+            follower_id = #{followerId}
+        </select>
+
+        <select id="selectUserFollowed" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            user_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            user_follows
+            WHERE
+            user_id = #{targetId}
+        </select>
+
+        <select id="selectShopFollowed" resultType="com.peitianbao.www.model.Follows">
+            SELECT
+            shop_id AS targetId,
+            follower_id AS followerId,
+            FROM
+            shop_follows
+            WHERE
+            shop_id = #{targetId}
+        </select>
+    </mapper>
+</mappers>

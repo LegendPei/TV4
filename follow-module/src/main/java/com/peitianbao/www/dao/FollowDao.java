@@ -53,4 +53,18 @@ public interface FollowDao {
      * @return 关注的用户id的集合
      */
     List<Follows> followingUsers(Integer followerId);
+
+    /**
+     * 查询商铺被那些用户关注了
+     * @param shopId 商铺id
+     * @return 用户id的集合
+     */
+    List<Follows> shopFollowed(Integer shopId);
+
+    /**
+     * 查询用户被那些用户关注了
+     * @param userId 用户id
+     * @return 用户id的集合
+     */
+    List<Follows> userFollowed(Integer userId);
 }

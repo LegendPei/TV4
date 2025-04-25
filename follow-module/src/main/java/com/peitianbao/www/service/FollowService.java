@@ -24,6 +24,8 @@ public class FollowService {
     //缓存前缀
     private static final String FOLLOW_SHOPS_PREFIX = "follow:shops:";
     private static final String FOLLOW_USERS_PREFIX = "follow:users:";
+    private static final String SHOP_FOLLOWED_PREFIX = "follow:shop-followed:";
+    private static final String USER_FOLLOWED_PREFIX = "follow:user-followed:";
 
     //缓存过期时间（单位：秒）
     private static final int CACHE_EXPIRE_SECONDS = 3600;
@@ -142,6 +144,62 @@ public class FollowService {
                     .collect(Collectors.toList());
 
             //写入缓存
+            RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
+        }
+
+        return followingUsers;
+    }
+
+    /**
+     * 查询商铺被关注的用户列表
+     */
+    public List<Integer> shopFollowed(Integer shopId) {
+        String cacheKey = SHOP_FOLLOWED_PREFIX + shopId;
+        String cachedUsersJson = RedisUtil.get(cacheKey);
+
+        List<Integer> followingUsers;
+        if (cachedUsersJson != null) {
+            //从缓存中获取被关注的用户列表
+            followingUsers = new Gson().fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+        } else {
+            //从数据库中加载被关注的用户列表
+            List<Follows> followsList = followDao.shopFollowed(shopId);
+            if (followsList == null || followsList.isEmpty()) {
+                throw new FollowException("商铺被关注的用户列表为空");
+            }
+
+            followingUsers = followsList.stream()
+                    .map(Follows::getTargetId)
+                    .collect(Collectors.toList());
+
+            RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
+        }
+
+        return followingUsers;
+    }
+
+    /**
+     * 查询用户被关注的用户列表
+     */
+    public List<Integer> userFollowed(Integer userId) {
+        String cacheKey = USER_FOLLOWED_PREFIX + userId;
+        String cachedUsersJson = RedisUtil.get(cacheKey);
+
+        List<Integer> followingUsers;
+        if (cachedUsersJson != null) {
+            //从缓存中获取被关注的用户列表
+            followingUsers = new Gson().fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+        } else {
+            //从数据库中加载被关注的用户列表
+            List<Follows> followsList = followDao.userFollowed(userId);
+            if (followsList == null || followsList.isEmpty()) {
+                throw new FollowException("用户被关注的用户列表为空");
+            }
+
+            followingUsers = followsList.stream()
+                    .map(Follows::getTargetId)
+                    .collect(Collectors.toList());
+
             RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
         }
 

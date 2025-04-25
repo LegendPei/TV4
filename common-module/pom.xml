@@ -50,6 +50,11 @@
             <artifactId>gson</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+
         <!-- JUnit 5 依赖 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -3,7 +3,10 @@ package com.peitianbao.www.listener;
 import com.peitianbao.www.springframework.annontion.DubboReference;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
 import com.peitianbao.www.springframework.util.ClassScanner;
-import com.peitianbao.www.util.*;
+import com.peitianbao.www.util.ConnectionPool;
+import com.peitianbao.www.util.LoadProperties;
+import com.peitianbao.www.util.LoggingFramework;
+import com.peitianbao.www.util.SqlSession;
 import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.RegistryConfig;
@@ -25,8 +28,8 @@ public class ApplicationInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("like try to begin");
-        System.out.println("Using Gson instance from GsonFactory: " + GsonFactory.getGSON());
+        System.out.println("follow try to begin");
+
         try {
             if (initialized) {
                 System.out.println("ApplicationInitializer have begin");

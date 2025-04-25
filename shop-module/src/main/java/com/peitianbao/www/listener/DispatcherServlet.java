@@ -1,11 +1,13 @@
 package com.peitianbao.www.listener;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.peitianbao.www.exception.ShopException;
 import com.peitianbao.www.springframework.annontion.Controller;
 import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
+import com.peitianbao.www.util.LocalDateTimeAdapter;
 import com.peitianbao.www.util.ResponseUtil;
 
 import javax.servlet.annotation.WebServlet;
@@ -16,6 +18,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -122,6 +125,11 @@ public class DispatcherServlet extends HttpServlet {
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
 
+        // 创建并配置Gson实例，注册 LocalDateTime 适配器
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+                .create();
+
         for (int i = 0; i < parameterTypes.length; i++) {
             Class<?> paramType = parameterTypes[i];
             Annotation[] annotations = parameterAnnotations[i];
@@ -136,19 +144,18 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             if (hasRequestBody) {
-                // 使用 Gson 解析请求体中的 JSON 数据
+                // 使用配置好的Gson实例解析请求体中的JSON数据
                 String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
                 System.out.println("Request Body: " + json);
                 try {
-                    args[i] = new Gson().fromJson(json, paramType);
+                    args[i] = gson.fromJson(json, paramType);
+                    System.out.println("Parsed argument: " + args[i]);
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to parse request body: " + e.getMessage());
+                    throw new RuntimeException("Failed to parse request body: " + e.getMessage(), e);
                 }
             } else if (paramType.isAssignableFrom(HttpServletRequest.class)) {
-                // 如果是 HttpServletRequest 参数，直接赋值
                 args[i] = req;
             } else if (paramType.isAssignableFrom(HttpServletResponse.class)) {
-                // 如果是 HttpServletResponse 参数，直接赋值
                 args[i] = resp;
             } else {
                 throw new RuntimeException("Unsupported parameter type or missing @MyRequestBody");

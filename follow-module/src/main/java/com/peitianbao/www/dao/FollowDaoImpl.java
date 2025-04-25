@@ -28,12 +28,9 @@ public class FollowDaoImpl implements FollowDao {
             params.put("targetId", userId);
             params.put("followerId", followerId);
 
-            Map<String, Object> param = new HashMap<>();
-            param.put("userId", userId);
+            int result = sqlSession.executeUpdate("FollowMapper.insertUserFollow", params);
 
-            int result = sqlSession.executeUpdate("FollowMapper.insertFollow", params);
-            int result1 = sqlSession.executeUpdate("UserMapper.incrementUserFollows", param);
-            return result!=0&&result1!=0;
+            return result!=0;
         } catch (Exception e) {
             LoggingFramework.severe("插入关注失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -48,12 +45,9 @@ public class FollowDaoImpl implements FollowDao {
             params.put("targetId", shopId);
             params.put("followerId", followerId);
 
-            Map<String, Object> param = new HashMap<>();
-            param.put("shopId", shopId);
+            int result = sqlSession.executeUpdate("FollowMapper.insertShopFollow", params);
 
-            int result = sqlSession.executeUpdate("FollowMapper.insertFollow", params);
-            int result1 = sqlSession.executeUpdate("ShopMapper.incrementShopFollows", param);
-            return result!=0&&result1!=0;
+            return result!=0;
         } catch (Exception e) {
             LoggingFramework.severe("插入关注失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -68,12 +62,9 @@ public class FollowDaoImpl implements FollowDao {
             params.put("targetId", userId);
             params.put("followerId", followerId);
 
-            Map<String, Object> param = new HashMap<>();
-            param.put("userId", userId);
+            int result = sqlSession.executeUpdate("FollowMapper.deleteUserFollow", params);
 
-            int result = sqlSession.executeUpdate("FollowMapper.deleteFollow", params);
-            int result1 = sqlSession.executeUpdate("UserMapper.lowUserFollows", param);
-            return result!=0&&result1!=0;
+            return result!=0;
         } catch (Exception e) {
             LoggingFramework.severe("取消关注失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -88,12 +79,9 @@ public class FollowDaoImpl implements FollowDao {
             params.put("targetId", shopId);
             params.put("followerId", followerId);
 
-            Map<String, Object> param = new HashMap<>();
-            param.put("shopId", shopId);
+            int result = sqlSession.executeUpdate("FollowMapper.deleteShopFollow", params);
 
-            int result = sqlSession.executeUpdate("FollowMapper.deleteFollow", params);
-            int result1 = sqlSession.executeUpdate("ShopMapper.lowShopFollows", param);
-            return result!=0&&result1!=0;
+            return result!=0;
         } catch (Exception e) {
             LoggingFramework.severe("取消关注失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -126,6 +114,36 @@ public class FollowDaoImpl implements FollowDao {
             return sqlSession.executeQueryForList("FollowMapper.selectFollowingUsers", params, Follows.class);
         } catch (Exception e) {
             LoggingFramework.severe("查询关注用户记录失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<Follows> shopFollowed(Integer shopId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", shopId);
+
+            LoggingFramework.info("尝试查询商铺 ID：" + shopId + " 的被关注记录");
+            return sqlSession.executeQueryForList("FollowMapper.selectShopFollowed", params, Follows.class);
+        } catch (Exception e) {
+            LoggingFramework.severe("查询商铺被关注记录失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<Follows> userFollowed(Integer userId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", userId);
+
+            LoggingFramework.info("尝试查询用户 ID：" + userId + " 的被关注记录");
+            return sqlSession.executeQueryForList("FollowMapper.selectUserFollowed", params, Follows.class);
+        } catch (Exception e) {
+            LoggingFramework.severe("查询用户被关注记录失败：" + e.getMessage());
             LoggingFramework.logException(e);
             return null;
         }

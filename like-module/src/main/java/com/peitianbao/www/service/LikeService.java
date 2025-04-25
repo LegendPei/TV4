@@ -8,6 +8,7 @@ import com.peitianbao.www.exception.LikeException;
 import com.peitianbao.www.model.Likes;
 import com.peitianbao.www.springframework.annontion.Autowired;
 import com.peitianbao.www.springframework.annontion.Service;
+import com.peitianbao.www.util.GsonFactory;
 import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
@@ -21,9 +22,6 @@ public class LikeService {
     @Autowired
     private LikeDao likeDao;
 
-    @Autowired
-    private ShopService shopService;
-
     //缓存前缀
     private static final String SHOP_LIKES_PREFIX = "like:shop:";
     private static final String COMMENT_LIKES_PREFIX = "like:comment:";
@@ -31,6 +29,7 @@ public class LikeService {
     //缓存过期时间（单位：秒）
     private static final int CACHE_EXPIRE_SECONDS = 3600;
 
+    private final Gson gson = GsonFactory.getGSON();
     /**
      * 商铺插入点赞
      */
@@ -74,14 +73,14 @@ public class LikeService {
 
             List<Likes> likesList;
             if (cachedLikesJson != null) {
-                //从缓存中获取点赞列表
-                likesList = new Gson().fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
+                // 从缓存中获取点赞列表
+                likesList = gson.fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
             } else {
-                //从数据库中加载点赞列表
+                // 从数据库中加载点赞列表
                 likesList = likeDao.selectShopLikes(shopId);
                 if (likesList != null) {
                     // 写入缓存
-                    RedisUtil.set(cacheKey, new Gson().toJson(likesList), CACHE_EXPIRE_SECONDS);
+                    RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
                 }
             }
 
@@ -105,13 +104,13 @@ public class LikeService {
             List<Likes> likesList;
             if (cachedLikesJson != null) {
                 // 从缓存中获取点赞列表
-                likesList = new Gson().fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
+                likesList = gson.fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
             } else {
                 // 从数据库中加载点赞列表
                 likesList = likeDao.selectCommentLikes(commentId);
                 if (likesList != null) {
                     // 写入缓存
-                    RedisUtil.set(cacheKey, new Gson().toJson(likesList), CACHE_EXPIRE_SECONDS);
+                    RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
                 }
             }
 
@@ -123,6 +122,7 @@ public class LikeService {
             throw new LikeException("搜索评论点赞失败");
         }
     }
+
 
     /**
      * 查询用户点赞的商铺列表
@@ -161,6 +161,6 @@ public class LikeService {
             cacheKey = SHOP_LIKES_PREFIX + targetId;
             likesList = likeDao.selectShopLikes(targetId);
         }
-        RedisUtil.set(cacheKey, new Gson().toJson(likesList), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
     }
 }

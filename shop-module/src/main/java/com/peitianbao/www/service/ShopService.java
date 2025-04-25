@@ -180,6 +180,13 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     @Override
     public boolean incrementShopLikes(Integer shopId) {
         //更新数据库中的点赞数
+        if (shopDao == null) {
+            throw new IllegalStateException("ShopDao is not initialized!");
+        }
+
+        if (shopId == null) {
+            throw new IllegalArgumentException("shopId cannot be null");
+        }
         boolean result = shopDao.incrementShopLikes(shopId);
         if (!result) {
             throw new ShopException("商铺点赞失败");
