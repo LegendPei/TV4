@@ -1,7 +1,7 @@
 package com.peitianbao.www.listener;
 
 import com.google.gson.Gson;
-import com.peitianbao.www.exception.UserException;
+import com.peitianbao.www.exception.VoucherException;
 import com.peitianbao.www.springframework.annontion.Controller;
 import com.peitianbao.www.springframework.annontion.MyRequestBody;
 import com.peitianbao.www.springframework.annontion.RequestMapping;
@@ -91,7 +91,7 @@ public class DispatcherServlet extends HttpServlet {
         } catch (InvocationTargetException e) {
             // 捕获目标方法抛出的异常
             Throwable cause = e.getCause();
-            if (cause instanceof UserException userException) {
+            if (cause instanceof VoucherException userException) {
                 handleShopException(resp, userException);
             } else {
                 ResponseUtil.sendErrorResponse(resp, 500, "Internal Server Error: " + cause.getMessage());
@@ -102,9 +102,9 @@ public class DispatcherServlet extends HttpServlet {
     }
 
     /**
-     * 处理 ShopException
+     * 处理 VoucherException
      */
-    private void handleShopException(HttpServletResponse resp, UserException userException) throws IOException {
+    private void handleShopException(HttpServletResponse resp, VoucherException userException) throws IOException {
         String message = userException.getMessage();
         if (message != null && message.matches("^\\[\\d{3}].*")) {
             int code = Integer.parseInt(message.substring(1, 4));

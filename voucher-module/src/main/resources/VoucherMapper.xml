@@ -1,0 +1,94 @@
+<mappers>
+    <!-- 券表相关操作 -->
+    <mapper namespace="UserMapper">
+        <insert id="insertUser">
+            INSERT INTO users (user_name, user_account, user_password)
+            VALUES (#{userName}, #{userAccount}, #{userPassword})
+        </insert>
+        <select id="selectUserById" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_id = #{userId}
+        </select>
+        <update id="updateUser">
+            UPDATE users
+            <set>
+                <if test="userName != null">user_name = #{userName},</if>
+                <if test="userAccount != null">user_account = #{userAccount},</if>
+                <if test="userPassword != null">user_password = #{userPassword},</if>
+            </set>
+            WHERE user_id = #{userId}
+        </update>
+        <delete id="deleteUserById">
+            DELETE FROM users WHERE user_id = #{userId}
+        </delete>
+        <select id="selectUserByAccountAndPassword" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_account = #{account}
+        </select>
+        <select id="selectUserByAccount" resultType="com.peitianbao.www.model.po.UsersPO">
+            SELECT
+            user_id AS userId,
+            user_name AS userName,
+            user_account AS userAccount,
+            user_password AS userPassword,
+            followers AS followers,
+            following_users AS followingUsers,
+            following_shops AS followingShops
+            FROM
+            users
+            WHERE
+            user_account = #{account}
+        </select>
+        <update id="incrementUserFollowers">
+            UPDATE users
+            SET followers = followers + 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="lowUserFollowers">
+            UPDATE users
+            SET followers = followers - 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="incrementFollowingUsers">
+            UPDATE users
+            SET following_users = following_users + 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="lowFollowingUsers">
+            UPDATE users
+            SET following_users = following_users - 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="incrementFollowingShops">
+            UPDATE users
+            SET following_shops = following_shops + 1
+            WHERE user_id = #{userId}
+        </update>
+        <update id="lowFollowingShops">
+            UPDATE users
+            SET following_shops = following_shops - 1
+            WHERE user_id = #{userId}
+        </update>
+    </mapper>
+
+</mappers>
