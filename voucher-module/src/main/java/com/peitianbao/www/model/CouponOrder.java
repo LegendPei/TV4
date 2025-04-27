@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CouponOrder {
     private String orderId;
-    private int couponId;
-    private int userId;
+    private Integer couponId;
+    private Integer userId;
 }

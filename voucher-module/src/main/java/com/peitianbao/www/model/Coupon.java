@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Coupon {
-    private int couponId;
+    private Integer couponId;
+    private String couponName;
     private int couponType;
     private int discountAmount;
     private int minSpend;
