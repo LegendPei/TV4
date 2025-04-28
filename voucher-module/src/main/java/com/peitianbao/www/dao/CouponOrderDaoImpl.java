@@ -40,7 +40,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
     }
 
     @Override
-    public CouponOrder getCouponOrderInfo(String orderId) {
+    public CouponOrder getCouponOrderInfo(long orderId) {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("orderId", orderId);

@@ -2,8 +2,8 @@
     <!-- 券表相关操作 -->
     <mapper namespace="CouponMapper">
         <insert id="insertCoupon">
-            INSERT INTO coupon (coupon_type, discount_amount,min_spend,total_stock,available_stock,start_time,end_time,max_per_user,coupon_name)
-            VALUES (#{couponType}, #{discountAmount}, #{minSpend},#{totalStock}, #{availableStock}, #{startTime},#{endTime}, #{maxPerUser}, #{couponName})
+            INSERT INTO coupon (coupon_type, discount_amount,min_spend,total_stock,available_stock,start_time,end_time,max_per_user,coupon_name,shop_id)
+            VALUES (#{couponType}, #{discountAmount}, #{minSpend},#{totalStock}, #{availableStock}, #{startTime},#{endTime}, #{maxPerUser}, #{couponName},#{shopId})
         </insert>
         <select id="selectCouponById" resultType="com.peitianbao.www.model.Coupon">
             SELECT

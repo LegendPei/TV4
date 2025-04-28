@@ -33,6 +33,7 @@ public class CouponDaoImpl implements CouponDao {
             params.put("startTime", coupon.getStartTime());
             params.put("endTime", coupon.getEndTime());
             params.put("maxPerUser", coupon.getMaxPerUser());
+            params.put("shopId", coupon.getShopId());
 
             LoggingFramework.info("尝试插入秒杀活动：" + coupon.getCouponName());
             int result = sqlSession.executeUpdate("CouponMapper.insertCoupon", params);

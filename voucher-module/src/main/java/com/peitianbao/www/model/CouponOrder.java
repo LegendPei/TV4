@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CouponOrder {
-    private String orderId;
+    private long orderId;
     private Integer couponId;
     private Integer userId;
 }

@@ -103,20 +103,31 @@ public class CouponService {
     /**
      * 获取按状态分类的秒杀活动列表
      */
-    public Map<String, List<Coupon>> getCouponActivitiesByStatus() {
-        String cacheKey = COUPON_ACTIVITIES_STATUS_PREFIX;
+    public List<Coupon> getCouponActivitiesByStatus(String sortType) {
+        String cacheKey = COUPON_ACTIVITIES_STATUS_PREFIX + ":" + sortType;
 
         String cachedActivities = RedisUtil.get(cacheKey);
         if (cachedActivities != null) {
-            return gson.fromJson(cachedActivities, new TypeToken<Map<String, List<Coupon>>>() {}.getType());
+            if ("NOT_EXISTS".equals(cachedActivities)) {
+                throw new VoucherException("未查询到该状态的秒杀活动");
+            }
+            return gson.fromJson(cachedActivities, new TypeToken<List<Coupon>>() {}.getType());
         }
 
         List<Coupon> allCoupons = couponDao.getAllCoupons();
         if (allCoupons == null || allCoupons.isEmpty()) {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
             throw new VoucherException("查询秒杀活动信息为空");
         }
 
-        Map<String, List<Coupon>> result = classifyCouponsByStatus(allCoupons);
+        Map<String, List<Coupon>> classifiedCoupons = classifyCouponsByStatus(allCoupons);
+
+        List<Coupon> result = classifiedCoupons.getOrDefault(sortType, Collections.emptyList());
+
+        if (result.isEmpty()) {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+            throw new VoucherException("未查询到该状态的秒杀活动");
+        }
 
         RedisUtil.set(cacheKey, gson.toJson(result), getRandomExpireTime());
         return result;

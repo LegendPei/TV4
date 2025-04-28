@@ -20,7 +20,7 @@ public interface CouponOrderDao {
      * @param orderId 订单ID
      * @return 秒杀订单对象
      */
-    CouponOrder getCouponOrderInfo(String orderId);
+    CouponOrder getCouponOrderInfo(long orderId);
 
     /**
      * 查询用户对某个秒杀活动的参与次数

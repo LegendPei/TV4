@@ -23,4 +23,5 @@ public class Coupon {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private int maxPerUser;
+    private Integer shopId;
 }
