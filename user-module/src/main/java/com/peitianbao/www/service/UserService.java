@@ -10,6 +10,8 @@ import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.token.RedisUtil;
 
+import java.util.Random;
+
 /**
  * @author leg
  */
@@ -20,11 +22,18 @@ public class UserService implements com.peitianbao.www.api.UserService {
     @Autowired
     private UserDao userDao;
 
-    //用户信息缓存前缀
     private static final String USER_INFO_PREFIX = "user:info:";
 
-    //缓存过期时间（单位：秒）
-    private static final int CACHE_EXPIRE_SECONDS = 3600;
+    //基础缓存过期时间
+    private static final int BASE_CACHE_EXPIRE_SECONDS = 3600;
+
+    //随机化缓存过期时间的最大偏移量
+    private static final int RANDOM_EXPIRE_OFFSET = 300;
+
+    //缓存空值的过期时间
+    private static final int EMPTY_CACHE_EXPIRE_SECONDS = 300;
+
+    private final Gson gson = new Gson();
 
     /**
      * 用户注册
@@ -51,7 +60,6 @@ public class UserService implements com.peitianbao.www.api.UserService {
             throw new UserException("登录失败：存在输入的信息为空");
         }
 
-        //查询用户ID
         Integer userId = userDao.findUserIdByAccount(userAccount);
         if (userId == null) {
             throw new UserException("登录失败：账号不存在");
@@ -62,21 +70,21 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         UsersPO userPo;
         if (cachedUserJson != null) {
-            //从缓存中获取用户信息
-            userPo = new Gson().fromJson(cachedUserJson, UsersPO.class);
-        } else {
-            //从数据库中加载用户信息
-            userPo = userDao.loginUser(userAccount, userPassword);
-            if (userPo != null) {
-                //写入缓存
-                RedisUtil.set(cacheKey, new Gson().toJson(userPo), CACHE_EXPIRE_SECONDS);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
             }
+            userPo = gson.fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            userPo = userDao.loginUser(userAccount, userPassword);
+            if (userPo == null) {
+                RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+                throw new UserException("登录失败：账号或密码错误");
+            }
+            RedisUtil.set(cacheKey, gson.toJson(userPo), getRandomExpireTime());
         }
-
-        if (userPo == null || !userPo.getUserPassword().equals(userPassword)) {
+        if (!userPo.getUserPassword().equals(userPassword)) {
             throw new UserException("登录失败：账号或密码错误");
         }
-
         return new UsersDTO(userPo);
     }
 
@@ -92,9 +100,8 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         boolean result = userDao.updateUser(userPo);
         if (result) {
-            //更新缓存
             String cacheKey = USER_INFO_PREFIX + userId;
-            RedisUtil.set(cacheKey, new Gson().toJson(userPo), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(userPo), getRandomExpireTime());
             return true;
         } else {
             throw new UserException("用户更新失败:已有的账号或名字");
@@ -107,7 +114,6 @@ public class UserService implements com.peitianbao.www.api.UserService {
     public boolean userDelete(Integer userId) {
         boolean result = userDao.deleteUser(userId);
         if (result) {
-            //清除缓存
             String cacheKey = USER_INFO_PREFIX + userId;
             RedisUtil.delete(cacheKey);
             return true;
@@ -125,21 +131,18 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         UsersPO userPo;
         if (cachedUserJson != null) {
-            //从缓存中获取用户信息
-            userPo = new Gson().fromJson(cachedUserJson, UsersPO.class);
-        } else {
-            //从数据库中加载用户信息
-            userPo = userDao.showUserInfo(userId);
-            if (userPo != null) {
-                //写入缓存
-                RedisUtil.set(cacheKey, new Gson().toJson(userPo), CACHE_EXPIRE_SECONDS);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
             }
+            userPo = gson.fromJson(cachedUserJson, UsersPO.class);
+        } else {
+            userPo = userDao.showUserInfo(userId);
+            if (userPo == null) {
+                RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+                throw new UserException("用户信息不存在");
+            }
+            RedisUtil.set(cacheKey, gson.toJson(userPo), getRandomExpireTime());
         }
-
-        if (userPo == null) {
-            throw new UserException("用户信息不存在");
-        }
-
         return new UsersDTO(userPo);
     }
 
@@ -148,18 +151,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean incrementUserFollowers(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.incrementUserFollowers(userId);
         if (!result) {
             throw new UserException("用户增加被关注失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -169,7 +173,7 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         int currentFollows = user.getFollowers();
         user.setFollowers(currentFollows + 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
     }
@@ -179,18 +183,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean lowUserFollowers(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.lowUserFollowers(userId);
         if (!result) {
             throw new UserException("用户减少被关注失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -203,7 +208,7 @@ public class UserService implements com.peitianbao.www.api.UserService {
             throw new UserException("关注数不能为负数");
         }
         user.setFollowers(currentFollows - 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
     }
@@ -213,18 +218,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean incrementFollowingUsers(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.incrementFollowingUsers(userId);
         if (!result) {
             throw new UserException("用户增加关注用户失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -234,7 +240,7 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         int currentFollows = user.getFollowingUsers();
         user.setFollowingUsers(currentFollows + 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
     }
@@ -244,18 +250,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean lowFollowingUsers(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.lowFollowingUsers(userId);
         if (!result) {
             throw new UserException("用户减少关注用户失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -268,7 +275,7 @@ public class UserService implements com.peitianbao.www.api.UserService {
             throw new UserException("关注数不能为负数");
         }
         user.setFollowingUsers(currentFollows - 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
     }
@@ -278,18 +285,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean incrementFollowingShops(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.incrementFollowingShops(userId);
         if (!result) {
             throw new UserException("用户增加关注商铺失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -299,7 +307,7 @@ public class UserService implements com.peitianbao.www.api.UserService {
 
         int currentFollows = user.getFollowingShops();
         user.setFollowingShops(currentFollows + 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
     }
@@ -309,18 +317,19 @@ public class UserService implements com.peitianbao.www.api.UserService {
      */
     @Override
     public boolean lowFollowingShops(Integer userId) {
-        //更新数据库中的关注数
         boolean result = userDao.lowFollowingShops(userId);
         if (!result) {
             throw new UserException("用户减少关注商铺失败");
         }
 
         String cacheKey = USER_INFO_PREFIX + userId;
-
         String cachedUserJson = RedisUtil.get(cacheKey);
         UsersPO user;
         if (cachedUserJson != null) {
-            user = new Gson().fromJson(cachedUserJson, UsersPO.class);
+            if ("NOT_EXISTS".equals(cachedUserJson)) {
+                throw new UserException("用户信息不存在");
+            }
+            user = gson.fromJson(cachedUserJson, UsersPO.class);
         } else {
             user = userDao.showUserInfo(userId);
             if (user == null) {
@@ -333,8 +342,15 @@ public class UserService implements com.peitianbao.www.api.UserService {
             throw new UserException("关注数不能为负数");
         }
         user.setFollowingShops(currentFollows - 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(user), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(user), getRandomExpireTime());
 
         return true;
+    }
+
+    /**
+     * 获取随机化的缓存过期时间
+     */
+    private int getRandomExpireTime() {
+        return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
     }
 }

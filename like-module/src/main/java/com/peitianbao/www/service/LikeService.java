@@ -12,6 +12,7 @@ import com.peitianbao.www.util.GsonFactory;
 import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author leg
@@ -22,14 +23,20 @@ public class LikeService {
     @Autowired
     private LikeDao likeDao;
 
-    //缓存前缀
     private static final String SHOP_LIKES_PREFIX = "like:shop:";
     private static final String COMMENT_LIKES_PREFIX = "like:comment:";
 
-    //缓存过期时间（单位：秒）
-    private static final int CACHE_EXPIRE_SECONDS = 3600;
+    //基础缓存过期时间
+    private static final int BASE_CACHE_EXPIRE_SECONDS = 3600;
+
+    //随机化缓存过期时间的最大偏移量
+    private static final int RANDOM_EXPIRE_OFFSET = 300;
+
+    //缓存空值的过期时间
+    private static final int EMPTY_CACHE_EXPIRE_SECONDS = 300;
 
     private final Gson gson = GsonFactory.getGSON();
+
     /**
      * 商铺插入点赞
      */
@@ -37,9 +44,7 @@ public class LikeService {
         Likes likes = new Likes(targetId, likerId);
 
         boolean result = likeDao.insertShopLike(likes);
-
         if (result) {
-            //更新缓存
             updateLikesCache(targetId);
             return true;
         } else {
@@ -52,10 +57,9 @@ public class LikeService {
      */
     public boolean commentLike(Integer targetId, Integer likerId) {
         Likes likes = new Likes(targetId, likerId);
-        boolean result = likeDao.insertCommentLike(likes);
 
+        boolean result = likeDao.insertCommentLike(likes);
         if (result) {
-            //更新缓存
             updateLikesCache(targetId);
             return true;
         } else {
@@ -73,19 +77,14 @@ public class LikeService {
 
             List<Likes> likesList;
             if (cachedLikesJson != null) {
-                // 从缓存中获取点赞列表
                 likesList = gson.fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
             } else {
-                // 从数据库中加载点赞列表
                 likesList = likeDao.selectShopLikes(shopId);
-                if (likesList != null) {
-                    // 写入缓存
-                    RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
+                if (likesList == null || likesList.isEmpty()) {
+                    RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
+                    throw new LikeException("商铺暂无点赞记录");
                 }
-            }
-
-            if (likesList == null || likesList.isEmpty()) {
-                throw new LikeException("商铺暂无点赞记录");
+                RedisUtil.set(cacheKey, gson.toJson(likesList), getRandomExpireTime());
             }
             return likesList;
         } else {
@@ -103,26 +102,20 @@ public class LikeService {
 
             List<Likes> likesList;
             if (cachedLikesJson != null) {
-                // 从缓存中获取点赞列表
                 likesList = gson.fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
             } else {
-                // 从数据库中加载点赞列表
                 likesList = likeDao.selectCommentLikes(commentId);
-                if (likesList != null) {
-                    // 写入缓存
-                    RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
+                if (likesList == null || likesList.isEmpty()) {
+                    RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
+                    throw new LikeException("评论暂无点赞记录");
                 }
-            }
-
-            if (likesList == null || likesList.isEmpty()) {
-                throw new LikeException("评论暂无点赞记录");
+                RedisUtil.set(cacheKey, gson.toJson(likesList), getRandomExpireTime());
             }
             return likesList;
         } else {
             throw new LikeException("搜索评论点赞失败");
         }
     }
-
 
     /**
      * 查询用户点赞的商铺列表
@@ -153,14 +146,24 @@ public class LikeService {
         String cacheKey;
         List<Likes> likesList;
         if (targetId < 100000) {
-            // 更新评论点赞缓存
             cacheKey = COMMENT_LIKES_PREFIX + targetId;
             likesList = likeDao.selectCommentLikes(targetId);
         } else {
-            // 更新商铺点赞缓存
             cacheKey = SHOP_LIKES_PREFIX + targetId;
             likesList = likeDao.selectShopLikes(targetId);
         }
-        RedisUtil.set(cacheKey, gson.toJson(likesList), CACHE_EXPIRE_SECONDS);
+
+        if (likesList == null || likesList.isEmpty()) {
+            RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
+        } else {
+            RedisUtil.set(cacheKey, gson.toJson(likesList), getRandomExpireTime());
+        }
+    }
+
+    /**
+     * 获取随机化的缓存过期时间
+     */
+    private int getRandomExpireTime() {
+        return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
     }
 }

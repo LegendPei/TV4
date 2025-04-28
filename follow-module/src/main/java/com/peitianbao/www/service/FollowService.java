@@ -10,6 +10,7 @@ import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -21,14 +22,21 @@ public class FollowService {
     @Autowired
     private FollowDao followDao;
 
-    //缓存前缀
     private static final String FOLLOW_SHOPS_PREFIX = "follow:shops:";
     private static final String FOLLOW_USERS_PREFIX = "follow:users:";
     private static final String SHOP_FOLLOWED_PREFIX = "follow:shop-followed:";
     private static final String USER_FOLLOWED_PREFIX = "follow:user-followed:";
 
-    //缓存过期时间（单位：秒）
-    private static final int CACHE_EXPIRE_SECONDS = 3600;
+    //基础缓存过期时间
+    private static final int BASE_CACHE_EXPIRE_SECONDS = 3600;
+
+    //随机化缓存过期时间的最大偏移量
+    private static final int RANDOM_EXPIRE_OFFSET = 300;
+
+    //缓存空值的过期时间
+    private static final int EMPTY_CACHE_EXPIRE_SECONDS = 300;
+
+    private final Gson gson = new Gson();
 
     /**
      * 关注用户
@@ -36,9 +44,8 @@ public class FollowService {
     public boolean followUser(Integer userId, Integer followerId) {
         boolean result = followDao.followUser(userId, followerId);
         if (result) {
-            //清除缓存
-            RedisUtil.delete(FOLLOW_SHOPS_PREFIX + followerId);
             RedisUtil.delete(FOLLOW_USERS_PREFIX + followerId);
+            RedisUtil.delete(USER_FOLLOWED_PREFIX + userId);
             return true;
         } else {
             throw new FollowException("关注用户失败");
@@ -51,9 +58,8 @@ public class FollowService {
     public boolean followShop(Integer shopId, Integer followerId) {
         boolean result = followDao.followShop(shopId, followerId);
         if (result) {
-            //清除缓存
             RedisUtil.delete(FOLLOW_SHOPS_PREFIX + followerId);
-            RedisUtil.delete(FOLLOW_USERS_PREFIX + followerId);
+            RedisUtil.delete(SHOP_FOLLOWED_PREFIX + shopId);
             return true;
         } else {
             throw new FollowException("关注商铺失败");
@@ -66,9 +72,8 @@ public class FollowService {
     public boolean unfollowUser(Integer userId, Integer followerId) {
         boolean result = followDao.unfollowUser(userId, followerId);
         if (result) {
-            //清除缓存
-            RedisUtil.delete(FOLLOW_SHOPS_PREFIX + followerId);
             RedisUtil.delete(FOLLOW_USERS_PREFIX + followerId);
+            RedisUtil.delete(USER_FOLLOWED_PREFIX + userId);
             return true;
         } else {
             throw new FollowException("取消关注用户失败");
@@ -81,9 +86,8 @@ public class FollowService {
     public boolean unfollowShop(Integer shopId, Integer followerId) {
         boolean result = followDao.unfollowShop(shopId, followerId);
         if (result) {
-            //清除缓存
             RedisUtil.delete(FOLLOW_SHOPS_PREFIX + followerId);
-            RedisUtil.delete(FOLLOW_USERS_PREFIX + followerId);
+            RedisUtil.delete(SHOP_FOLLOWED_PREFIX + shopId);
             return true;
         } else {
             throw new FollowException("取消关注商铺失败");
@@ -99,24 +103,23 @@ public class FollowService {
 
         List<Integer> followingShops;
         if (cachedShopsJson != null) {
-            //从缓存中获取关注的商铺列表
-            followingShops = new Gson().fromJson(cachedShopsJson, new TypeToken<List<Integer>>() {}.getType());
+            followingShops = gson.fromJson(cachedShopsJson, new TypeToken<List<Integer>>() {}.getType());
+            if ("[]".equals(cachedShopsJson)) {
+                throw new FollowException("关注的商铺列表为空");
+            }
         } else {
-            //从数据库中加载关注的商铺列表
             List<Follows> followsList = followDao.followingShops(followerId);
             if (followsList == null || followsList.isEmpty()) {
+                RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
                 throw new FollowException("关注的商铺列表为空");
             }
 
-            //提取targetId列表
             followingShops = followsList.stream()
                     .map(Follows::getTargetId)
                     .collect(Collectors.toList());
 
-            //写入缓存
-            RedisUtil.set(cacheKey, new Gson().toJson(followingShops), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(followingShops), getRandomExpireTime());
         }
-
         return followingShops;
     }
 
@@ -129,24 +132,23 @@ public class FollowService {
 
         List<Integer> followingUsers;
         if (cachedUsersJson != null) {
-            //从缓存中获取关注的用户列表
-            followingUsers = new Gson().fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            followingUsers = gson.fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            if ("[]".equals(cachedUsersJson)) {
+                throw new FollowException("关注的用户列表为空");
+            }
         } else {
-            //从数据库中加载关注的用户列表
             List<Follows> followsList = followDao.followingUsers(followerId);
             if (followsList == null || followsList.isEmpty()) {
+                RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
                 throw new FollowException("关注的用户列表为空");
             }
 
-            //提取targetId列表
             followingUsers = followsList.stream()
                     .map(Follows::getTargetId)
                     .collect(Collectors.toList());
 
-            //写入缓存
-            RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(followingUsers), getRandomExpireTime());
         }
-
         return followingUsers;
     }
 
@@ -157,25 +159,27 @@ public class FollowService {
         String cacheKey = SHOP_FOLLOWED_PREFIX + shopId;
         String cachedUsersJson = RedisUtil.get(cacheKey);
 
-        List<Integer> followingUsers;
+        List<Integer> followedUsers;
         if (cachedUsersJson != null) {
-            //从缓存中获取被关注的用户列表
-            followingUsers = new Gson().fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            followedUsers = gson.fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            if ("[]".equals(cachedUsersJson)) {
+                throw new FollowException("商铺被关注的用户列表为空");
+            }
         } else {
-            //从数据库中加载被关注的用户列表
             List<Follows> followsList = followDao.shopFollowed(shopId);
             if (followsList == null || followsList.isEmpty()) {
+                RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
                 throw new FollowException("商铺被关注的用户列表为空");
             }
 
-            followingUsers = followsList.stream()
+            followedUsers = followsList.stream()
                     .map(Follows::getTargetId)
                     .collect(Collectors.toList());
 
-            RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(followedUsers), getRandomExpireTime());
         }
 
-        return followingUsers;
+        return followedUsers;
     }
 
     /**
@@ -185,24 +189,33 @@ public class FollowService {
         String cacheKey = USER_FOLLOWED_PREFIX + userId;
         String cachedUsersJson = RedisUtil.get(cacheKey);
 
-        List<Integer> followingUsers;
+        List<Integer> followedUsers;
         if (cachedUsersJson != null) {
-            //从缓存中获取被关注的用户列表
-            followingUsers = new Gson().fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            followedUsers = gson.fromJson(cachedUsersJson, new TypeToken<List<Integer>>() {}.getType());
+            if ("[]".equals(cachedUsersJson)) {
+                throw new FollowException("用户被关注的用户列表为空");
+            }
         } else {
-            //从数据库中加载被关注的用户列表
             List<Follows> followsList = followDao.userFollowed(userId);
             if (followsList == null || followsList.isEmpty()) {
+                RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
                 throw new FollowException("用户被关注的用户列表为空");
             }
 
-            followingUsers = followsList.stream()
+            followedUsers = followsList.stream()
                     .map(Follows::getTargetId)
                     .collect(Collectors.toList());
 
-            RedisUtil.set(cacheKey, new Gson().toJson(followingUsers), CACHE_EXPIRE_SECONDS);
-        }
 
-        return followingUsers;
+            RedisUtil.set(cacheKey, gson.toJson(followedUsers), getRandomExpireTime());
+        }
+        return followedUsers;
+    }
+
+    /**
+     * 获取随机化的缓存过期时间
+     */
+    private int getRandomExpireTime() {
+        return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
     }
 }

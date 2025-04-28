@@ -12,6 +12,7 @@ import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -23,11 +24,18 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     @Autowired
     private ShopDao shopDao;
 
-    //商铺信息缓存前缀
     private static final String SHOP_INFO_PREFIX = "shop:info:";
 
-    //缓存过期时间（单位：秒）
-    private static final int CACHE_EXPIRE_SECONDS = 3600;
+    //基础缓存过期时间
+    private static final int BASE_CACHE_EXPIRE_SECONDS = 3600;
+
+    //随机化缓存过期时间的最大偏移量
+    private static final int RANDOM_EXPIRE_OFFSET = 300;
+
+    //缓存空值的过期时间
+    private static final int EMPTY_CACHE_EXPIRE_SECONDS = 300;
+
+    private final Gson gson = new Gson();
 
     /**
      * 商铺注册
@@ -56,7 +64,6 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
             throw new ShopException("登录失败：存在输入的信息为空");
         }
 
-        //查询商铺ID
         Integer shopId = shopDao.findShopIdByAccount(shopAccount);
         if (shopId == null) {
             throw new ShopException("登录失败：账号不存在");
@@ -67,21 +74,22 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
 
         ShopsPO shop;
         if (cachedShopJson != null) {
-            //从缓存中获取商铺信息
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
-        } else {
-            //从数据库中加载商铺信息
-            shop = shopDao.loginShop(shopAccount, shopPassword);
-            if (shop != null) {
-                //写入缓存
-                RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
             }
-        }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
+        } else {
+            shop = shopDao.loginShop(shopAccount, shopPassword);
+            if (shop == null) {
+                RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+                throw new ShopException("登录失败：账号或密码错误");
+            }
 
-        if (shop == null || !shop.getShopPassword().equals(shopPassword)) {
+            RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
+        }
+        if (!shop.getShopPassword().equals(shopPassword)) {
             throw new ShopException("登录失败：账号或密码错误");
         }
-
         return new ShopsDTO(shop);
     }
 
@@ -99,9 +107,8 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
 
         boolean result = shopDao.updateShop(shop);
         if (result) {
-            //更新缓存
             String cacheKey = SHOP_INFO_PREFIX + shopId;
-            RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
             return true;
         } else {
             throw new ShopException("商铺更新失败:已有的账号或名字");
@@ -114,7 +121,6 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     public boolean shopDelete(Integer shopId) {
         boolean result = shopDao.deleteShop(shopId);
         if (result) {
-            //清除缓存
             String cacheKey = SHOP_INFO_PREFIX + shopId;
             RedisUtil.delete(cacheKey);
             return true;
@@ -132,21 +138,19 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
 
         ShopsPO shop;
         if (cachedShopJson != null) {
-            //从缓存中获取商铺信息
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
-        } else {
-            //从数据库中加载商铺信息
-            shop = shopDao.showShopInfo(shopId);
-            if (shop != null) {
-                //写入缓存
-                RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
             }
-        }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
+        } else {
+            shop = shopDao.showShopInfo(shopId);
+            if (shop == null) {
+                RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+                throw new ShopException("商铺信息不存在");
+            }
 
-        if (shop == null) {
-            throw new ShopException("商铺信息不存在");
+            RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
         }
-
         return new ShopsDTO(shop);
     }
 
@@ -156,19 +160,16 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
     public List<ShopsDTO> findAllShops(String sortType) {
         List<ShopsPO> allShops = shopDao.findAllShops();
 
-        //根据sortType进行排序
         Comparator<ShopsPO> comparator = switch (sortType == null ? "" : sortType.toLowerCase()) {
             case "likes" -> Comparator.comparing(ShopsPO::getShopLikes).reversed();
             case "followers" -> Comparator.comparing(ShopsPO::getShopFollowers).reversed();
             default -> Comparator.comparing(ShopsPO::getShopId);
         };
 
-        //对商铺列表进行排序
         List<ShopsPO> sortedShops = allShops.stream()
                 .sorted(comparator)
                 .toList();
 
-        //转换为DTO列表
         return sortedShops.stream()
                 .map(ShopsDTO::new)
                 .collect(Collectors.toList());
@@ -179,26 +180,26 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
      */
     @Override
     public boolean incrementShopLikes(Integer shopId) {
-        //更新数据库中的点赞数
         if (shopDao == null) {
             throw new IllegalStateException("ShopDao is not initialized!");
         }
-
         if (shopId == null) {
             throw new IllegalArgumentException("shopId cannot be null");
         }
+
         boolean result = shopDao.incrementShopLikes(shopId);
         if (!result) {
             throw new ShopException("商铺点赞失败");
         }
 
         String cacheKey = SHOP_INFO_PREFIX + shopId;
-
         String cachedShopJson = RedisUtil.get(cacheKey);
         ShopsPO shop;
         if (cachedShopJson != null) {
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
-
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
+            }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
         } else {
             shop = shopDao.showShopInfo(shopId);
             if (shop == null) {
@@ -207,7 +208,8 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
         }
 
         shop.setShopLikes(shop.getShopLikes() + 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
+
         return true;
     }
 
@@ -216,18 +218,19 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
      */
     @Override
     public boolean lowShopLikes(Integer shopId) {
-        //更新数据库中的点赞数
         boolean result = shopDao.lowShopLikes(shopId);
         if (!result) {
             throw new ShopException("商铺减少点赞失败");
         }
 
         String cacheKey = SHOP_INFO_PREFIX + shopId;
-
         String cachedShopJson = RedisUtil.get(cacheKey);
         ShopsPO shop;
         if (cachedShopJson != null) {
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
+            }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
         } else {
             shop = shopDao.showShopInfo(shopId);
             if (shop == null) {
@@ -240,7 +243,7 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
             throw new ShopException("点赞数不能为负数");
         }
         shop.setShopLikes(currentLikes - 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
 
         return true;
     }
@@ -250,18 +253,19 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
      */
     @Override
     public boolean lowShopFollows(Integer shopId) {
-        //更新数据库中的关注数
         boolean result = shopDao.lowShopFollows(shopId);
         if (!result) {
             throw new ShopException("商铺减少关注失败");
         }
 
         String cacheKey = SHOP_INFO_PREFIX + shopId;
-
         String cachedShopJson = RedisUtil.get(cacheKey);
         ShopsPO shop;
         if (cachedShopJson != null) {
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
+            }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
         } else {
             shop = shopDao.showShopInfo(shopId);
             if (shop == null) {
@@ -274,7 +278,7 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
             throw new ShopException("关注数不能为负数");
         }
         shop.setShopFollowers(currentFollows - 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
 
         return true;
     }
@@ -284,18 +288,19 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
      */
     @Override
     public boolean incrementShopFollows(Integer shopId) {
-        //更新数据库中的关注数
         boolean result = shopDao.incrementShopFollows(shopId);
         if (!result) {
             throw new ShopException("商铺增加关注失败");
         }
 
         String cacheKey = SHOP_INFO_PREFIX + shopId;
-
         String cachedShopJson = RedisUtil.get(cacheKey);
         ShopsPO shop;
         if (cachedShopJson != null) {
-            shop = new Gson().fromJson(cachedShopJson, ShopsPO.class);
+            if ("NOT_EXISTS".equals(cachedShopJson)) {
+                throw new ShopException("商铺信息不存在");
+            }
+            shop = gson.fromJson(cachedShopJson, ShopsPO.class);
         } else {
             shop = shopDao.showShopInfo(shopId);
             if (shop == null) {
@@ -305,8 +310,15 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
 
         int currentFollows = shop.getShopFollowers();
         shop.setShopFollowers(currentFollows + 1);
-        RedisUtil.set(cacheKey, new Gson().toJson(shop), CACHE_EXPIRE_SECONDS);
+        RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
 
         return true;
+    }
+
+    /**
+     * 获取随机化的缓存过期时间
+     */
+    private int getRandomExpireTime() {
+        return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
     }
 }
