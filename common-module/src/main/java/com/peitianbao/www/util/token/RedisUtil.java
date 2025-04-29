@@ -1,10 +1,15 @@
 package com.peitianbao.www.util.token;
 
 import com.peitianbao.www.util.LoadProperties;
+import com.peitianbao.www.util.VoucherId;
+import io.micrometer.core.instrument.util.IOUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 /**
@@ -121,4 +126,22 @@ public class RedisUtil {
             jedis.expire(key, expireSeconds);
         }
     }
+
+    /**
+     * 从classpath或resource中读取Lua文件
+     */
+    public static String loadLuaScript(String scriptName) {
+        try {
+            InputStream is = RedisUtil.class.getClassLoader().getResourceAsStream(scriptName);
+            if (is == null) {
+                throw new RuntimeException("找不到 Lua 脚本：" + scriptName);
+            }
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("加载 Lua 脚本失败：" + scriptName, e);
+        }
+    }
+
+
+
 }

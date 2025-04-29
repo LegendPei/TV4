@@ -1,5 +1,6 @@
 package com.peitianbao.www.controller;
 
+import com.google.gson.Gson;
 import com.peitianbao.www.exception.VoucherException;
 import com.peitianbao.www.model.Coupon;
 import com.peitianbao.www.model.CouponOrder;
@@ -7,10 +8,15 @@ import com.peitianbao.www.model.SortRequest;
 import com.peitianbao.www.service.CouponOrderService;
 import com.peitianbao.www.service.CouponService;
 import com.peitianbao.www.springframework.annontion.*;
+import com.peitianbao.www.util.GsonFactory;
 import com.peitianbao.www.util.ResponseUtil;
+import com.peitianbao.www.util.VoucherId;
+import com.peitianbao.www.util.token.RedisUtil;
+import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +30,12 @@ public class VoucherController {
 
     @Autowired
     CouponService couponService;
+
+    private final Gson gson = GsonFactory.getGSON();
+
+    //Redis缓存临时订单
+    private static final String TEMP_ORDER_PREFIX = "temp:order:";
+    private static final int TEMP_ORDER_EXPIRE_SECONDS = 60 * 5;
 
     /**
      * 创建秒杀活动
@@ -110,7 +122,7 @@ public class VoucherController {
     }
 
     /**
-     * 获取参与某活动的所有用户 ID 列表
+     * 获取参与某活动的所有用户ID列表
      */
     @RequestMapping(value = "/getCouponUsersId", methodType = RequestMethod.POST)
     public void getCouponUsersId(@MyRequestBody CouponOrder couponOrder, HttpServletResponse resp) throws IOException{
@@ -146,6 +158,140 @@ public class VoucherController {
                 "orderId", orderId,
                 "userId", userId,
                 "couponId",couponId
+        );
+        ResponseUtil.sendSuccessResponse(resp, responseData);
+    }
+
+    /**
+     * 用户点击秒杀
+     */
+    @RequestMapping(value = "/secKill", methodType = RequestMethod.POST)
+    public void secKill(@MyRequestBody CouponOrder request, HttpServletResponse resp) {
+        Integer couponId = request.getCouponId();
+        Integer userId = request.getUserId();
+
+        if (couponId == null || userId == null) {
+            throw new VoucherException("[400] 参数缺失");
+        }
+
+        Coupon coupon = couponService.getCouponInfo(couponId);
+        if (coupon == null) {
+            throw new VoucherException("[401] 秒杀活动不存在");
+        }
+
+        //构造键名
+        String stockKey = "coupon_stock:" + couponId;
+        String userParticipationKey = "coupon:user:participate:" + userId + ":" + couponId;
+
+        List<String> keys = Arrays.asList(stockKey, userParticipationKey);
+        List<String> args = Arrays.asList(
+                String.valueOf(coupon.getMaxPerUser()),
+                String.valueOf(userId),
+                String.valueOf(couponId)
+        );
+
+        //加载Lua脚本
+        String luaScript = RedisUtil.loadLuaScript("seckill.lua");
+
+        try (Jedis jedis = RedisUtil.getJedis()) {
+            Object rawResult = jedis.eval(luaScript, keys, args);
+
+            String result = rawResult.toString();
+
+            switch (result) {
+                case "-1":
+                    throw new VoucherException("[401] 您已达到购买上限");
+                case "-2":
+                    throw new VoucherException("[402] 库存不足");
+                case "1":
+                    break;
+                default:
+                    throw new VoucherException("[500] 未知错误：" + result);
+            }
+
+            long orderId = VoucherId.voucherId("coupon");
+            CouponOrder order = new CouponOrder(orderId, couponId, userId);
+
+            //缓存临时订单至Redis
+            RedisUtil.set(TEMP_ORDER_PREFIX + orderId, gson.toJson(order), TEMP_ORDER_EXPIRE_SECONDS);
+
+            //返回成功信息
+            Map<String, Object> responseData = Map.of(
+                    "message", "抢购成功，请前往支付",
+                    "orderId", orderId,
+                    "couponId", couponId,
+                    "userId", userId
+            );
+            ResponseUtil.sendSuccessResponse(resp, responseData);
+        } catch (Exception e) {
+            throw new VoucherException("[500] 秒杀异常：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 用户点击已支付
+     */
+    @RequestMapping(value = "/confirmPayment", methodType = RequestMethod.POST)
+    public void confirmPayment(@MyRequestBody CouponOrder request, HttpServletResponse resp) throws IOException {
+        Long orderId = request.getOrderId();
+        Integer couponId = request.getCouponId();
+        Integer userId = request.getUserId();
+
+        //检查Redis中是否存在该订单
+        String tempOrderKey = TEMP_ORDER_PREFIX + orderId;
+        String cachedOrderJson = RedisUtil.get(tempOrderKey);
+        if (cachedOrderJson == null) {
+            throw new VoucherException("[404] 订单不存在");
+        }
+
+        CouponOrder tempOrder = gson.fromJson(cachedOrderJson, CouponOrder.class);
+        if (!tempOrder.getUserId().equals(userId) || !tempOrder.getCouponId().equals(couponId)) {
+            throw new VoucherException("[403] 订单信息不匹配");
+        }
+
+        //将订单写入数据库
+        boolean createSuccess = couponOrderService.createCouponOrder(tempOrder.getOrderId(),tempOrder.getCouponId(),tempOrder.getUserId());
+        if (!createSuccess) {
+            throw new VoucherException("[500] 订单创建失败");
+        }
+        RedisUtil.delete(tempOrderKey);
+        Map<String, Object> responseData = Map.of(
+                "message", "支付成功",
+                "orderId", orderId
+        );
+        ResponseUtil.sendSuccessResponse(resp, responseData);
+    }
+
+    /**
+     * 用户点击不想要了
+     */
+    @RequestMapping(value = "/cancelPayment", methodType = RequestMethod.POST)
+    public void cancelPayment(@MyRequestBody CouponOrder request, HttpServletResponse resp) throws IOException {
+        long orderId = request.getOrderId();
+        Integer couponId = request.getCouponId();
+        Integer userId = request.getUserId();
+
+        //检查Redis中是否有这个订单
+        String tempOrderKey = TEMP_ORDER_PREFIX + orderId;
+        String cachedOrderJson = RedisUtil.get(tempOrderKey);
+        if (cachedOrderJson == null) {
+            throw new VoucherException("[404] 该订单已处理");
+        }
+
+        CouponOrder tempOrder = gson.fromJson(cachedOrderJson, CouponOrder.class);
+        if (!tempOrder.getUserId().equals(userId) || !tempOrder.getCouponId().equals(couponId)) {
+            throw new VoucherException("[403] 订单信息不匹配");
+        }
+
+        boolean rollbackSuccess = couponService.rollbackCoupon(couponId);
+        if (!rollbackSuccess) {
+            throw new VoucherException("[500] 库存回滚失败");
+        }
+
+        RedisUtil.delete(tempOrderKey);
+
+        Map<String, Object> responseData = Map.of(
+                "message", "取消订单成功"
         );
         ResponseUtil.sendSuccessResponse(resp, responseData);
     }

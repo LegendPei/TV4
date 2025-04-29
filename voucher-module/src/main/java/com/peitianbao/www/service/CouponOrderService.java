@@ -8,7 +8,6 @@ import com.peitianbao.www.model.CouponOrder;
 import com.peitianbao.www.springframework.annontion.Autowired;
 import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.GsonFactory;
-import com.peitianbao.www.util.VoucherId;
 import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
@@ -42,8 +41,7 @@ public class CouponOrderService {
     /**
      * 创建秒杀订单
      */
-    public boolean createCouponOrder(Integer couponId, Integer userId) {
-        long orderId = VoucherId.voucherId("coupon");
+    public boolean createCouponOrder(long orderId,Integer couponId, Integer userId) {
         CouponOrder order = new CouponOrder(orderId, couponId, userId);
 
         boolean result = couponOrderDao.createCouponOrder(order);
