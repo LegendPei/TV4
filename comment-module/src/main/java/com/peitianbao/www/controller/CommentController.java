@@ -115,7 +115,7 @@ public class CommentController {
             throw new CommentException("[401] 传入的用户信息错误");
         }
 
-        List<Comments> comments=commentService.selectCommentsByCommenterId(commentedId,sortMode);
+        List<Comments> comments=commentService.selectCommentsByTargetId(commentedId,sortMode);
 
         Map<String, Object> responseData = Map.of(
                 "message", "用户评论查询成功",

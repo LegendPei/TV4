@@ -94,7 +94,7 @@ public class FollowController {
 
         boolean result1 = followService.followShop(targetId,followerId);
         boolean result2 = shopService.incrementShopFollows(targetId);
-        boolean result3 = userService.incrementUserFollowers(followerId);
+        boolean result3 = userService.incrementFollowingShops(followerId);
 
         if(result1&&result2&&result3){
             Map<String, Object> responseData = Map.of(

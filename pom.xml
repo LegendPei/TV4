@@ -18,6 +18,7 @@
         <module>follow-module</module>
         <module>like-module</module>
         <module>voucher-module</module>
+        <module>blog-module</module>
     </modules>
 
     <!-- 全局依赖管理 -->

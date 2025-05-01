@@ -1,0 +1,61 @@
+<mappers>
+    <!-- 评论表相关操作 -->
+    <mapper namespace="CommentMapper">
+        <insert id="insertComment">
+            INSERT INTO comments (commenter_id, target_id, comment_content)
+            VALUES (#{commenterId}, #{targetId}, #{commentContent})
+        </insert>
+        <select id="selectCommentById" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            comment_id = #{commentId}
+        </select>
+        <delete id="deleteCommentById">
+            DELETE FROM comments WHERE comment_id = #{commentId}
+        </delete>
+        <select id="selectCommentsByCommenterId" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            commenter_id = #{commenterId}
+        </select>
+        <select id="selectCommentsByTargetId" resultType="com.peitianbao.www.model.Comments">
+            SELECT
+            comment_id AS commentId,
+            commenter_id AS commenterId,
+            target_id AS targetId,
+            comment_content AS commentContent,
+            comment_time AS commentTime,
+            comment_likes AS commentLikes
+            FROM
+            comments
+            WHERE
+            target_id = #{targetId}
+        </select>
+        <update id="incrementCommentLikes">
+            UPDATE comments
+            SET comment_likes = comment_likes + 1
+            WHERE comment_id = #{commentId}
+        </update>
+        <update id="lowCommentLikes">
+            UPDATE comments
+            SET comment_likes = comment_likes - 1
+            WHERE comment_id = #{commentId}
+        </update>
+    </mapper>
+</mappers>
