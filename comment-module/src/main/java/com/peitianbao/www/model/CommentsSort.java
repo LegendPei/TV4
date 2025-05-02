@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FindAllUserCommentsRequest implements Serializable {
+public class CommentsSort implements Serializable {
     private Comments comments;
     private SortRequest sortRequest;
 }

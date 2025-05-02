@@ -23,11 +23,25 @@ public interface LikeDao {
     boolean insertCommentLike(Likes likes);
 
     /**
+     * 插入动态点赞
+     * @param likes 插入的点赞信息
+     * @return 是否成功插入
+     */
+    boolean insertBlogLike(Likes likes);
+
+    /**
      * 查询给商铺点赞的记录
      * @param shopId 商铺id
      * @return 点赞信息的集合
      */
     List<Likes> selectShopLikes(Integer shopId);
+
+    /**
+     * 查询给动态点赞的记录
+     * @param blogId 动态id
+     * @return 点赞信息的集合
+     */
+    List<Likes> selectBlogLikes(Integer blogId);
 
     /**
      * 查询给评论点赞的记录

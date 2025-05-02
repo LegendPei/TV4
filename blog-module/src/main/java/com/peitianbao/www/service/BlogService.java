@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.peitianbao.www.dao.BlogDao;
 import com.peitianbao.www.exception.BlogException;
+import com.peitianbao.www.model.BlogCollection;
 import com.peitianbao.www.model.Blogs;
 import com.peitianbao.www.springframework.annontion.Autowired;
 import com.peitianbao.www.springframework.annontion.DubboService;
@@ -146,12 +147,22 @@ public class BlogService implements com.peitianbao.www.api.BlogService {
     /**
      * 用户收藏动态
      */
-    public boolean collectBlog(Integer blogId) {
-        boolean result = blogDao.collectBlog(blogId);
+    public boolean collectBlog(Integer blogId,Integer userId) {
+        boolean result = blogDao.collectBlog(blogId,userId);
         if (result) {
-            // 清除缓存
-            RedisUtil.delete(BLOG_INFO_PREFIX + blogId);
+            String cacheKey = BLOG_INFO_PREFIX + blogId;
+
+            Blogs blog = blogDao.getBlogInfo(blogId);
+            if (blog == null) {
+                throw new BlogException("动态不存在");
+            }
+
+            blog.setBlogCollections(blog.getBlogCollections() + 1);
+
+            RedisUtil.set(cacheKey, gson.toJson(blog), getRandomExpireTime());
+
             RedisUtil.delete(USER_COLLECTED_BLOGS_PREFIX + blogId);
+
             return true;
         } else {
             throw new BlogException("收藏动态失败");
@@ -161,11 +172,26 @@ public class BlogService implements com.peitianbao.www.api.BlogService {
     /**
      * 用户取消收藏动态
      */
-    public boolean unCollectBlog(Integer blogId) {
-        boolean result = blogDao.unCollectBlog(blogId);
+    public boolean unCollectBlog(Integer blogId,Integer userId) {
+        boolean result = blogDao.unCollectBlog(blogId,userId);
         if (result) {
-            RedisUtil.delete(BLOG_INFO_PREFIX + blogId);
+            String cacheKey = BLOG_INFO_PREFIX + blogId;
+
+            Blogs blog = blogDao.getBlogInfo(blogId);
+            if (blog == null) {
+                throw new BlogException("动态不存在");
+            }
+
+            if (blog.getBlogCollections() > 0) {
+                blog.setBlogCollections(blog.getBlogCollections() - 1);
+            } else {
+                blog.setBlogCollections(0);
+            }
+
+            RedisUtil.set(cacheKey, gson.toJson(blog), getRandomExpireTime());
+
             RedisUtil.delete(USER_COLLECTED_BLOGS_PREFIX + blogId);
+
             return true;
         } else {
             throw new BlogException("取消收藏动态失败");
@@ -175,30 +201,28 @@ public class BlogService implements com.peitianbao.www.api.BlogService {
     /**
      * 获取用户收藏的动态列表
      */
-    public List<Blogs> getUserCollectBlogs(Integer userId, String sortMode) {
-        if (!"likes".equals(sortMode) && !"time".equals(sortMode) && !"collections".equals(sortMode)) {
-            throw new BlogException("排序方式错误");
-        }
+    public List<BlogCollection> getUserCollectBlogs(Integer userId) {
+        String cacheKey = USER_COLLECTED_BLOGS_PREFIX + userId;
 
-        String cacheKey = USER_COLLECTED_BLOGS_PREFIX + userId + ":" + sortMode;
+        String cachedJson = RedisUtil.get(cacheKey);
+        List<BlogCollection> collections;
 
-        String cachedBlogsJson = RedisUtil.get(cacheKey);
-        List<Blogs> blogs;
-        if (cachedBlogsJson != null) {
-            if ("[]".equals(cachedBlogsJson)) {
+        if (cachedJson != null) {
+            if ("[]".equals(cachedJson)) {
                 throw new BlogException("用户暂无收藏动态");
             }
-            blogs = gson.fromJson(cachedBlogsJson, new TypeToken<List<Blogs>>() {}.getType());
+            collections = gson.fromJson(cachedJson, new TypeToken<List<BlogCollection>>() {}.getType());
         } else {
-            blogs = blogDao.getUserCollectBlogs(userId, sortMode);
-            if (blogs == null || blogs.isEmpty()) {
+            collections = blogDao.getUserCollectBlogs(userId);
+
+            if (collections == null || collections.isEmpty()) {
                 RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
                 throw new BlogException("用户暂无收藏动态");
             }
 
-            RedisUtil.set(cacheKey, gson.toJson(blogs), getRandomExpireTime());
+            RedisUtil.set(cacheKey, gson.toJson(collections), getRandomExpireTime());
         }
-        return blogs;
+        return collections;
     }
 
     /**

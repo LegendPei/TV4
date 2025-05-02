@@ -1,5 +1,6 @@
 package com.peitianbao.www.dao;
 
+import com.peitianbao.www.model.BlogCollection;
 import com.peitianbao.www.model.Blogs;
 
 import java.util.List;
@@ -55,22 +56,23 @@ public interface BlogDao {
     /**
      * 收藏动态
      * @param blogId 动态id
+     * @param userId 用户id
      * @return 是否收藏成功
      */
-    boolean collectBlog(Integer blogId);
+    boolean collectBlog(Integer blogId,Integer userId);
 
     /**
      * 取消收藏动态
      * @param blogId 动态id
+     * @param userId 用户id
      * @return 是否取消成功
      */
-    boolean unCollectBlog(Integer blogId);
+    boolean unCollectBlog(Integer blogId,Integer userId);
 
     /**
      * 得到用户收藏的动态
      * @param userId 用户id
-     * @param sortMode 排序方式
      * @return 动态集合
      */
-    List<Blogs> getUserCollectBlogs(Integer userId,String sortMode);
+    List<BlogCollection> getUserCollectBlogs(Integer userId);
 }

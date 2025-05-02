@@ -1,61 +1,97 @@
 <mappers>
-    <!-- 评论表相关操作 -->
-    <mapper namespace="CommentMapper">
-        <insert id="insertComment">
-            INSERT INTO comments (commenter_id, target_id, comment_content)
-            VALUES (#{commenterId}, #{targetId}, #{commentContent})
+    <!-- 动态表相关操作 -->
+    <mapper namespace="BlogMapper">
+        <insert id="insertBlog">
+            INSERT INTO blogs (target_id, blog_name, author_id，blog_content, file_path, blog_type)
+            VALUES (#{targetId}, #{blogName}, #{authorId},#{blogContent}, #{filePath}, #{blogType})
         </insert>
-        <select id="selectCommentById" resultType="com.peitianbao.www.model.Comments">
+        <insert id="insertBlogCollection">
+            INSERT INTO blog_collection (blog_id, user_id)
+            VALUES (#{blogId}, #{userId})
+        </insert>
+        <select id="selectBlogById" resultType="com.peitianbao.www.model.Blogs">
             SELECT
-            comment_id AS commentId,
-            commenter_id AS commenterId,
+            blog_id AS blogId,
+            blog_name AS blogName,
             target_id AS targetId,
-            comment_content AS commentContent,
-            comment_time AS commentTime,
-            comment_likes AS commentLikes
+            author_id AS authorId,
+            blog_content AS blogContent,
+            blog_time AS blogTime,
+            blog_likes AS blogLikes,
+            blog_collections AS blogCollections,
+            file_path AS filePath,
+            blog_type AS blogType
             FROM
-            comments
+            blogs
             WHERE
-            comment_id = #{commentId}
+            blog_id = #{blogId}
         </select>
-        <delete id="deleteCommentById">
-            DELETE FROM comments WHERE comment_id = #{commentId}
+        <select id="selectBlogsByUserId" resultType="com.peitianbao.www.model.Blogs">
+            SELECT
+            blog_id AS blogId,
+            blog_name AS blogName,
+            target_id AS targetId,
+            author_id AS authorId,
+            blog_content AS blogContent,
+            blog_time AS blogTime,
+            blog_likes AS blogLikes,
+            blog_collections AS blogCollections,
+            file_path AS filePath,
+            blog_type AS blogType
+            FROM
+            blogs
+            WHERE
+            author_id = #{authorId}
+        </select>
+        <select id="selectBlogsByShopId" resultType="com.peitianbao.www.model.Blogs">
+            SELECT
+            blog_id AS blogId,
+            blog_name AS blogName,
+            target_id AS targetId,
+            author_id AS authorId,
+            blog_content AS blogContent,
+            blog_time AS blogTime,
+            blog_likes AS blogLikes,
+            blog_collections AS blogCollections,
+            file_path AS filePath,
+            blog_type AS blogType
+            FROM
+            blogs
+            WHERE
+            author_id = #{authorId}
+        </select>
+        <select id="selectUserCollectBlogs" resultType="com.peitianbao.www.model.BlogCollection">
+            SELECT
+            blog_id AS blogId,
+            user_id AS userId,
+            collection_date AS collectionDate
+            FROM
+            blog_collection
+            WHERE
+            user_id = #{userId}
+        </select>
+        <delete id="deleteBlogCollection">
+            DELETE FROM blog_collection WHERE blog_id = #{blogId} AND user_id = #{userId}
         </delete>
-        <select id="selectCommentsByCommenterId" resultType="com.peitianbao.www.model.Comments">
-            SELECT
-            comment_id AS commentId,
-            commenter_id AS commenterId,
-            target_id AS targetId,
-            comment_content AS commentContent,
-            comment_time AS commentTime,
-            comment_likes AS commentLikes
-            FROM
-            comments
-            WHERE
-            commenter_id = #{commenterId}
-        </select>
-        <select id="selectCommentsByTargetId" resultType="com.peitianbao.www.model.Comments">
-            SELECT
-            comment_id AS commentId,
-            commenter_id AS commenterId,
-            target_id AS targetId,
-            comment_content AS commentContent,
-            comment_time AS commentTime,
-            comment_likes AS commentLikes
-            FROM
-            comments
-            WHERE
-            target_id = #{targetId}
-        </select>
-        <update id="incrementCommentLikes">
-            UPDATE comments
-            SET comment_likes = comment_likes + 1
-            WHERE comment_id = #{commentId}
+        <update id="incrementBlogLikes">
+            UPDATE blogs
+            SET blog_likes = blog_likes + 1
+            WHERE blog_id = #{blogId}
         </update>
-        <update id="lowCommentLikes">
-            UPDATE comments
-            SET comment_likes = comment_likes - 1
-            WHERE comment_id = #{commentId}
+        <update id="lowBlogLikes">
+            UPDATE blogs
+            SET blog_likes = blog_likes - 1
+            WHERE blog_id = #{blogId}
+        </update>
+        <update id="incrementBlogCollections">
+            UPDATE blogs
+            SET blog_collections = blog_collections + 1
+            WHERE blog_id = #{blogId}
+        </update>
+        <update id="lowBlogCollections">
+            UPDATE blogs
+            SET blog_collections = blog_collections - 1
+            WHERE blog_id = #{blogId}
         </update>
     </mapper>
 </mappers>

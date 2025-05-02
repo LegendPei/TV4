@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * @author leg
  */
 @Service
-public class FollowService {
+public class FollowService implements com.peitianbao.www.api.FollowService {
 
     @Autowired
     private FollowDao followDao;
@@ -97,6 +97,7 @@ public class FollowService {
     /**
      * 查询关注的商铺列表
      */
+    @Override
     public List<Integer> followingShops(Integer followerId) {
         String cacheKey = FOLLOW_SHOPS_PREFIX + followerId;
         String cachedShopsJson = RedisUtil.get(cacheKey);
@@ -126,6 +127,7 @@ public class FollowService {
     /**
      * 查询关注的用户列表
      */
+    @Override
     public List<Integer> followingUsers(Integer followerId) {
         String cacheKey = FOLLOW_USERS_PREFIX + followerId;
         String cachedUsersJson = RedisUtil.get(cacheKey);

@@ -58,4 +58,22 @@
             shop_like_id = #{likerId}
         </select>
     </mapper>
+    <!-- 动态点赞表相关操作 -->
+    <mapper namespace="BlogsLikesMapper">
+        <insert id="insertBlogsLike">
+            INSERT INTO blog_likes (blog_id, liker_id)
+            VALUES (#{targetId}, #{likerId})
+        </insert>
+
+        <select id="selectBlogsLikesByBlogId" resultType="com.peitianbao.www.model.Likes">
+            SELECT
+            blog_id AS targetId,
+            likes_time AS likeTime,
+            liker_id AS likerId
+            FROM
+            blog_likes
+            WHERE
+            blog_id = #{targetId}
+        </select>
+    </mapper>
 </mappers>

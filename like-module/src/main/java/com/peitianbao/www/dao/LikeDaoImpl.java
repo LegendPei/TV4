@@ -56,6 +56,24 @@ public class LikeDaoImpl implements LikeDao {
     }
 
     @Override
+    public boolean insertBlogLike(Likes likes) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", likes.getTargetId());
+            params.put("likerId", likes.getLikerId());
+
+            LoggingFramework.info("尝试插入动态点赞记录：" + likes);
+            int result = sqlSession.executeUpdate("BlogsLikesMapper.insertBlogsLike", params);
+            LoggingFramework.info("动态点赞记录插入成功：" + likes);
+            return result!=0;
+        } catch (Exception e) {
+            LoggingFramework.severe("插入动态点赞记录失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            throw new LikeException("插入动态点赞记录失败", e);
+        }
+    }
+
+    @Override
     public List<Likes> selectShopLikes(Integer shopId) {
         try {
             Map<String, Object> params = new HashMap<>();
@@ -65,6 +83,21 @@ public class LikeDaoImpl implements LikeDao {
             return sqlSession.executeQueryForList("ShopsLikesMapper.selectShopsLikesByShopId", params, Likes.class);
         } catch (Exception e) {
             LoggingFramework.severe("查询商铺点赞记录失败：" + e.getMessage());
+            LoggingFramework.logException(e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<Likes> selectBlogLikes(Integer blogId) {
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("targetId", blogId);
+
+            LoggingFramework.info("尝试查询动态 ID：" + blogId + " 的点赞记录");
+            return sqlSession.executeQueryForList("BlogsLikesMapper.selectBlogsLikesByBlogId", params, Likes.class);
+        } catch (Exception e) {
+            LoggingFramework.severe("查询动态点赞记录失败：" + e.getMessage());
             LoggingFramework.logException(e);
             return null;
         }

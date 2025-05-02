@@ -25,6 +25,7 @@ public class LikeService {
 
     private static final String SHOP_LIKES_PREFIX = "like:shop:";
     private static final String COMMENT_LIKES_PREFIX = "like:comment:";
+    private static final String BLOG_LIKES_PREFIX = "like:blog:";
 
     //基础缓存过期时间
     private static final int BASE_CACHE_EXPIRE_SECONDS = 3600;
@@ -64,6 +65,21 @@ public class LikeService {
             return true;
         } else {
             throw new LikeException("评论点赞失败");
+        }
+    }
+
+    /**
+     * 动态插入点赞
+     */
+    public boolean blogLike(Integer targetId, Integer likerId) {
+        Likes likes = new Likes(targetId, likerId);
+
+        boolean result = likeDao.insertBlogLike(likes);
+        if (result) {
+            updateLikesCache(targetId);
+            return true;
+        } else {
+            throw new LikeException("动态点赞失败");
         }
     }
 
@@ -118,6 +134,31 @@ public class LikeService {
     }
 
     /**
+     * 查询动态点赞列表
+     */
+    public List<Likes> selectBlogLikes(Integer blogId) {
+        if (blogId < 400000) {
+            String cacheKey = BLOG_LIKES_PREFIX + blogId;
+            String cachedLikesJson = RedisUtil.get(cacheKey);
+
+            List<Likes> likesList;
+            if (cachedLikesJson != null) {
+                likesList = gson.fromJson(cachedLikesJson, new TypeToken<List<Likes>>() {}.getType());
+            } else {
+                likesList = likeDao.selectBlogLikes(blogId);
+                if (likesList == null || likesList.isEmpty()) {
+                    RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
+                    throw new LikeException("动态暂无点赞记录");
+                }
+                RedisUtil.set(cacheKey, gson.toJson(likesList), getRandomExpireTime());
+            }
+            return likesList;
+        } else {
+            throw new LikeException("搜索评论点赞失败");
+        }
+    }
+
+    /**
      * 查询用户点赞的商铺列表
      */
     public List<Likes> selectUserLikesShops(Integer userId) {
@@ -148,6 +189,9 @@ public class LikeService {
         if (targetId < 100000) {
             cacheKey = COMMENT_LIKES_PREFIX + targetId;
             likesList = likeDao.selectCommentLikes(targetId);
+        } else if (targetId >=400000) {
+            cacheKey = BLOG_LIKES_PREFIX + targetId;
+            likesList = likeDao.selectBlogLikes(targetId);
         } else {
             cacheKey = SHOP_LIKES_PREFIX + targetId;
             likesList = likeDao.selectShopLikes(targetId);

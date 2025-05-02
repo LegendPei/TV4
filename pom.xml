@@ -31,6 +31,20 @@
                 <version>2.1.4</version>
             </dependency>
 
+            <!-- 文件上传 -->
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>1.4</version>
+            </dependency>
+
+            <!-- IO 工具类 -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.11.0</version>
+            </dependency>
+
             <!-- Lombok 依赖 -->
             <dependency>
                 <groupId>org.projectlombok</groupId>

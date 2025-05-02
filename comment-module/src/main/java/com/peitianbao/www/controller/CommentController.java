@@ -2,7 +2,7 @@ package com.peitianbao.www.controller;
 
 import com.peitianbao.www.exception.CommentException;
 import com.peitianbao.www.model.Comments;
-import com.peitianbao.www.model.FindAllUserCommentsRequest;
+import com.peitianbao.www.model.CommentsSort;
 import com.peitianbao.www.model.SortRequest;
 import com.peitianbao.www.service.CommentService;
 import com.peitianbao.www.springframework.annontion.*;
@@ -105,7 +105,7 @@ public class CommentController {
      * 查询某用户的所有评论
      */
     @RequestMapping(value="/findAllUserComments",methodType = RequestMethod.POST)
-    public void findAllUserComments(@MyRequestBody FindAllUserCommentsRequest request, HttpServletResponse resp)throws IOException {
+    public void findAllUserComments(@MyRequestBody CommentsSort request, HttpServletResponse resp)throws IOException {
         Comments comment = request.getComments();
         SortRequest sortRequest = request.getSortRequest();
 
@@ -127,21 +127,21 @@ public class CommentController {
     /**
      * 查询某目标的所有评论
      */
-    @RequestMapping(value="/findAllShopComments",methodType = RequestMethod.POST)
-    public void findAllShopComments(@MyRequestBody FindAllUserCommentsRequest request, HttpServletResponse resp)throws IOException {
+    @RequestMapping(value="/findAllTargetComments",methodType = RequestMethod.POST)
+    public void findAllShopComments(@MyRequestBody CommentsSort request, HttpServletResponse resp)throws IOException {
         Comments comment = request.getComments();
         SortRequest sortRequest = request.getSortRequest();
 
         Integer targetId = comment.getTargetId();
         String sortMode = sortRequest.getSortType();
         if(targetId==null){
-            throw new CommentException("[401] 传入的商铺信息错误");
+            throw new CommentException("[401] 传入的目标信息错误");
         }
 
         List<Comments> comments=commentService.selectCommentsByTargetId(targetId,sortMode);
 
         Map<String, Object> responseData = Map.of(
-                "message", "商铺评论查询成功",
+                "message", "目标评论查询成功",
                 "data", comments
         );
         ResponseUtil.sendSuccessResponse(resp, responseData);

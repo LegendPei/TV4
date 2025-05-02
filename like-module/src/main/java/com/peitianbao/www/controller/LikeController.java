@@ -1,5 +1,6 @@
 package com.peitianbao.www.controller;
 
+import com.peitianbao.www.api.BlogService;
 import com.peitianbao.www.api.CommentService;
 import com.peitianbao.www.api.ShopService;
 import com.peitianbao.www.exception.LikeException;
@@ -26,6 +27,9 @@ public class LikeController {
 
     @DubboReference(serviceName = "commentService")
     private CommentService commentService;
+
+    @DubboReference(serviceName = "blogService")
+    private BlogService blogService;
 
     /**
      * 插入评论点赞
@@ -78,6 +82,31 @@ public class LikeController {
     }
 
     /**
+     * 插入动态点赞
+     */
+    @RequestMapping(value = "/likeBlog", methodType = RequestMethod.POST)
+    public void likeBlog(@MyRequestBody Likes like, HttpServletResponse resp) throws IOException {
+        Integer targetId = like.getTargetId();
+        Integer likerId = like.getLikerId();
+
+        if(targetId == null || likerId == null) {
+            throw new LikeException("[401] 请求参数有误");
+        }
+
+        boolean result1 = likeService.blogLike(targetId, likerId);
+        boolean result2 = blogService.incrementBlogLikes(targetId);
+
+        if(result1 && result2) {
+            Map<String, Object> responseData = Map.of(
+                    "message", "动态成功点赞"
+            );
+            ResponseUtil.sendSuccessResponse(resp, responseData);
+        }else {
+            throw new LikeException("[400] 点赞失败");
+        }
+    }
+
+    /**
      * 查询商铺点赞列表
      */
     @RequestMapping(value = "/likeShopList", methodType = RequestMethod.POST)
@@ -98,6 +127,30 @@ public class LikeController {
             ResponseUtil.sendSuccessResponse(resp, responseData);
         }else {
             throw new LikeException("[400] 商铺点赞列表查询失败");
+        }
+    }
+
+    /**
+     * 查询动态点赞列表
+     */
+    @RequestMapping(value = "/likeBlogList", methodType = RequestMethod.POST)
+    public void likeBlogList(@MyRequestBody Likes like, HttpServletResponse resp) throws IOException {
+        Integer targetId = like.getTargetId();
+
+        if(targetId == null) {
+            throw new LikeException("[401] 请求参数有误");
+        }
+
+        List<Likes> result = likeService.selectBlogLikes(targetId);
+
+        if(result!=null) {
+            Map<String, Object> responseData = Map.of(
+                    "message", "动态点赞列表查询成功",
+                    "data", result
+            );
+            ResponseUtil.sendSuccessResponse(resp, responseData);
+        }else {
+            throw new LikeException("[400] 动态点赞列表查询失败");
         }
     }
 

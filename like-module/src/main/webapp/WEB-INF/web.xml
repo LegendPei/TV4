@@ -37,6 +37,16 @@
         <param-name>comment.dubbo.protocol.port</param-name>
         <param-value>20882</param-value>
     </context-param>
+
+    <!-- Blog Service 提供者配置 -->
+    <context-param>
+        <param-name>blogService.dubbo.application.name</param-name>
+        <param-value>com.peitianbao.www.api.BlogService</param-value>
+    </context-param>
+    <context-param>
+        <param-name>blog.dubbo.protocol.port</param-name>
+        <param-value>20884</param-value>
+    </context-param>
     <!-- 定义上下文监听器 -->
     <listener>
         <listener-class>com.peitianbao.www.listener.ApplicationInitializer</listener-class>

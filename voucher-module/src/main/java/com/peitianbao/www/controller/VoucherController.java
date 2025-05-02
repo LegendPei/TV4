@@ -48,7 +48,7 @@ public class VoucherController {
         boolean result = couponService.createCoupon(coupon);
         if(result){
             Map<String, Object> responseData = Map.of(
-                    "message", "商铺成功注册"
+                    "message", "秒杀活动成功创建"
             );
             ResponseUtil.sendSuccessResponse(resp, responseData);
         }else {

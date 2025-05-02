@@ -1,15 +1,14 @@
 package com.peitianbao.www.listener;
 
 import com.peitianbao.www.springframework.annontion.DubboReference;
+import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
 import com.peitianbao.www.springframework.util.ClassScanner;
 import com.peitianbao.www.util.ConnectionPool;
 import com.peitianbao.www.util.LoadProperties;
 import com.peitianbao.www.util.LoggingFramework;
 import com.peitianbao.www.util.SqlSession;
-import org.apache.dubbo.config.ApplicationConfig;
-import org.apache.dubbo.config.ReferenceConfig;
-import org.apache.dubbo.config.RegistryConfig;
+import org.apache.dubbo.config.*;
 import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 
 import javax.servlet.ServletContext;
@@ -56,7 +55,17 @@ public class ApplicationInitializer implements ServletContextListener {
             // 获取 ServletContext
             ServletContext context = sce.getServletContext();
 
-            // 初始化 Dubbo 配置
+            //加载Dubbo和Nacos配置
+            String applicationName = context.getInitParameter("dubbo.provider-application.name");
+            String registryAddress = context.getInitParameter("dubbo.provider-registry.address");
+            String protocolName = context.getInitParameter("dubbo.provider-protocol.name");
+            String protocolPort = context.getInitParameter("dubbo.provider-protocol.port");
+
+            if (applicationName == null || registryAddress == null || protocolName == null || protocolPort == null) {
+                throw new RuntimeException("缺少必要的 Dubbo 配置，请检查 web.xml 文件");
+            }
+
+            initializeDubboProvider(applicationName, registryAddress, protocolName, Integer.parseInt(protocolPort));
             initializeDubbo(context);
 
             // 处理 @DubboReference 注解的注入
@@ -172,17 +181,65 @@ public class ApplicationInitializer implements ServletContextListener {
         field.set(bean, proxyInstance);
     }
 
-    /**
-     * 根据服务名称获取应用名称
-     */
-    private String getApplicationNameFromConfig(String serviceName, ServletContext context) {
-        return context.getInitParameter(serviceName + ".dubbo.application.name");
-    }
+    private static void initializeDubboProvider(String applicationName, String registryAddress, String protocolName, int protocolPort) {
+        System.out.println("begin to Dubbo service");
 
-    /**
-     * 获取注册中心地址
-     */
-    private String getRegistryAddress(ServletContext context) {
-        return context.getInitParameter("dubbo.registry.address");
+        try {
+            // 创建 Dubbo 配置对象
+            ApplicationConfig applicationConfig = new ApplicationConfig();
+            applicationConfig.setName(applicationName);
+
+            RegistryConfig registryConfig = new RegistryConfig();
+            registryConfig.setAddress(registryAddress);
+
+            ProtocolConfig protocolConfig = new ProtocolConfig();
+            protocolConfig.setName(protocolName);
+            protocolConfig.setPort(protocolPort);
+
+            // 初始化 DubboBootstrap
+            DubboBootstrap bootstrap = DubboBootstrap.getInstance();
+            bootstrap.application(applicationConfig)
+                    .registry(registryConfig)
+                    .protocol(protocolConfig);
+
+            // 扫描指定包路径下的类
+            List<Class<?>> classes = ClassScanner.getClasses("com.peitianbao.www.service");
+
+            for (Class<?> clazz : classes) {
+                if (clazz.isAnnotationPresent(DubboService.class)) {
+                    System.out.println("find DubboService: " + clazz.getName());
+
+                    // 获取接口类型
+                    Class<?>[] interfaces = clazz.getInterfaces();
+                    if (interfaces.length == 0) {
+                        throw new RuntimeException("找不到接口: " + clazz.getName());
+                    }
+
+                    Class<?> interfaceClass = interfaces[0];
+
+                    // 从 BeanFactory 获取 Service 实例
+                    Object serviceInstance = BeanFactory.getBean(clazz.getSimpleName());
+                    if (serviceInstance == null) {
+                        throw new RuntimeException("Service instance not found in BeanFactory: " + clazz.getName());
+                    }
+
+                    // 创建 ServiceConfig 并注册服务
+                    ServiceConfig<Object> service = new ServiceConfig<>();
+                    service.setInterface(interfaceClass);
+                    service.setRef(serviceInstance);
+                    service.setVersion("1.0.0");
+
+                    // 将服务添加到 DubboBootstrap
+                    bootstrap.service(service);
+                    System.out.println("成功注册 Dubbo 服务: " + interfaceClass.getName());
+                }
+            }
+
+            // 启动 DubboBootstrap
+            bootstrap.start();
+            System.out.println("DubboBootstrap 成功启动并连接到 Nacos");
+        } catch (Exception e) {
+            throw new RuntimeException("Dubbo 注册失败", e);
+        }
     }
 }
