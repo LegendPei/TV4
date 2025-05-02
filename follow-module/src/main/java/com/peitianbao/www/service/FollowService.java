@@ -6,6 +6,7 @@ import com.peitianbao.www.dao.FollowDao;
 import com.peitianbao.www.exception.FollowException;
 import com.peitianbao.www.model.Follows;
 import com.peitianbao.www.springframework.annontion.Autowired;
+import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.annontion.Service;
 import com.peitianbao.www.util.token.RedisUtil;
 
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
  * @author leg
  */
 @Service
+@DubboService
 public class FollowService implements com.peitianbao.www.api.FollowService {
 
     @Autowired

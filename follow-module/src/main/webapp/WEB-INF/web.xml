@@ -4,35 +4,32 @@
          http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
          version="3.1">
 
-    <!-- 消费者端配置 -->
+    <!-- 统一的应用名 -->
     <context-param>
         <param-name>dubbo.application.name</param-name>
-        <param-value>follow-consumer</param-value>
+        <param-value>follow-module</param-value>
     </context-param>
+
+    <!-- 注册中心地址 -->
     <context-param>
         <param-name>dubbo.registry.address</param-name>
         <param-value>nacos://127.0.0.1:8848</param-value>
     </context-param>
-    <context-param>
-        <param-name>dubbo.consumer.timeout</param-name>
-        <param-value>10000</param-value> <!-- 设置全局超时时间为 10 秒 -->
-    </context-param>
 
+    <!-- 协议配置 -->
     <context-param>
-        <param-name>dubbo.provider-application.name</param-name>
-        <param-value>user-service</param-value>
-    </context-param>
-    <context-param>
-        <param-name>dubbo.provider-registry.address</param-name>
-        <param-value>nacos://127.0.0.1:8848</param-value>
-    </context-param>
-    <context-param>
-        <param-name>dubbo.provider-protocol.name</param-name>
+        <param-name>dubbo.protocol.name</param-name>
         <param-value>dubbo</param-value>
     </context-param>
     <context-param>
-        <param-name>dubbo.provider-protocol.port</param-name>
+        <param-name>dubbo.protocol.port</param-name>
         <param-value>20883</param-value>
+    </context-param>
+
+    <!-- 全局超时时间 -->
+    <context-param>
+        <param-name>dubbo.consumer.timeout</param-name>
+        <param-value>10000</param-value>
     </context-param>
 
     <!-- Shop Service 提供者配置 -->
