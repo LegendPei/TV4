@@ -1,11 +1,9 @@
 package com.peitianbao.www.controller;
 
-import com.peitianbao.www.util.ResponseUtil;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -30,7 +28,7 @@ public class UploadServlet extends HttpServlet {
     private static final String UPLOAD_DIR = "C:/Users/leg/Desktop/upload/";
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             File uploadDir = new File(UPLOAD_DIR);
             if (!uploadDir.exists()) {
@@ -51,7 +49,7 @@ public class UploadServlet extends HttpServlet {
 
                     //生成唯一文件名
                     String ext = originalName.substring(originalName.lastIndexOf("."));
-                    String fileName = UUID.randomUUID().toString() + ext;
+                    String fileName = UUID.randomUUID() + ext;
 
                     //构建目标文件路径
                     File file = new File(uploadDir, fileName);

@@ -7,7 +7,11 @@ import com.peitianbao.www.exception.LikeException;
 import com.peitianbao.www.model.Follows;
 import com.peitianbao.www.service.FollowService;
 import com.peitianbao.www.springframework.annontion.*;
+import com.peitianbao.www.util.LoggingFramework;
 import com.peitianbao.www.util.ResponseUtil;
+import io.seata.core.context.RootContext;
+import io.seata.tm.api.GlobalTransaction;
+import io.seata.tm.api.GlobalTransactionContext;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -32,25 +36,48 @@ public class FollowController {
      * 关注用户
      */
     @RequestMapping(value = "/followUser",methodType = RequestMethod.POST)
-    public void followUser(@MyRequestBody Follows follows, HttpServletResponse resp)throws IOException {
+    public void followUser(@MyRequestBody Follows follows, HttpServletResponse resp) {
         Integer targetId = follows.getTargetId();
         Integer followerId = follows.getFollowerId();
 
-        if(targetId==null||followerId==null){
-            throw new FollowException("[401] 请求的参数有误");
+        if (targetId == null || followerId == null) {
+            throw new FollowException("[401] 请求参数有误");
         }
 
-        boolean result1 = followService.followUser(targetId,followerId);
-        boolean result2 = userService.incrementFollowingUsers(followerId);
-        boolean result3 = userService.incrementUserFollowers(targetId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1&&result2&&result3){
-            Map<String, Object> responseData = Map.of(
-                    "message", "关注用户成功"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始关注用户事务：" + tx.getXid());
+
+            boolean result1 = followService.followUser(targetId, followerId);
+            boolean result2 = userService.incrementFollowingUsers(followerId);
+            boolean result3 = userService.incrementUserFollowers(targetId);
+
+            if (!result1 || !result2 || !result3) {
+                LoggingFramework.warning("关注失败，准备回滚事务");
+                tx.rollback();
+                throw new FollowException("[400] 关注用户失败");
+            }
+
+            LoggingFramework.info("关注成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "关注用户成功");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else{
-            throw new FollowException("[400] 关注用户失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("关注用户事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new FollowException("[500] 关注用户异常");
         }
     }
 
@@ -62,21 +89,44 @@ public class FollowController {
         Integer targetId = follows.getTargetId();
         Integer followerId = follows.getFollowerId();
 
-        if(targetId==null||followerId==null){
-            throw new FollowException("[401] 请求的参数有误");
+        if (targetId == null || followerId == null) {
+            throw new FollowException("[401] 请求参数有误");
         }
 
-        boolean result1 = followService.unfollowUser(targetId,followerId);
-        boolean result2 = userService.lowFollowingUsers(followerId);
-        boolean result3 = userService.lowUserFollowers(targetId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1&&result2&&result3){
-            Map<String, Object> responseData = Map.of(
-                    "message", "取消关注用户成功"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始取消关注事务：" + tx.getXid());
+
+            boolean result1 = followService.unfollowUser(targetId, followerId);
+            boolean result2 = userService.lowFollowingUsers(followerId);
+            boolean result3 = userService.lowUserFollowers(targetId);
+
+            if (!result1 || !result2 || !result3) {
+                LoggingFramework.warning("取消关注失败，准备回滚事务");
+                tx.rollback();
+                throw new FollowException("[400] 取消关注用户失败");
+            }
+
+            LoggingFramework.info("取消关注成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "取消关注用户成功");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else{
-            throw new FollowException("[400] 取消关注用户失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("取消关注事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new FollowException("[500] 取消关注用户异常：" + e.getMessage());
         }
     }
 
@@ -88,21 +138,44 @@ public class FollowController {
         Integer targetId = follows.getTargetId();
         Integer followerId = follows.getFollowerId();
 
-        if(targetId==null||followerId==null){
-            throw new FollowException("[401] 请求的参数有误");
+        if (targetId == null || followerId == null) {
+            throw new FollowException("[401] 请求参数有误");
         }
 
-        boolean result1 = followService.followShop(targetId,followerId);
-        boolean result2 = shopService.incrementShopFollows(targetId);
-        boolean result3 = userService.incrementFollowingShops(followerId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1&&result2&&result3){
-            Map<String, Object> responseData = Map.of(
-                    "message", "关注商铺成功"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始关注商铺事务：" + tx.getXid());
+
+            boolean result1 = followService.followShop(targetId, followerId);
+            boolean result2 = shopService.incrementShopFollows(targetId);
+            boolean result3 = userService.incrementFollowingShops(followerId);
+
+            if (!result1 || !result2 || !result3) {
+                LoggingFramework.warning("关注商铺失败，准备回滚事务");
+                tx.rollback();
+                throw new FollowException("[400] 关注商铺失败");
+            }
+
+            LoggingFramework.info("关注商铺成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "关注商铺成功");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else{
-            throw new FollowException("[400] 关注商铺失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("关注商铺事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new FollowException("[500] 关注商铺异常：" + e.getMessage());
         }
     }
 
@@ -114,21 +187,44 @@ public class FollowController {
         Integer targetId = follows.getTargetId();
         Integer followerId = follows.getFollowerId();
 
-        if(targetId==null||followerId==null){
-            throw new FollowException("[401] 请求的参数有误");
+        if (targetId == null || followerId == null) {
+            throw new FollowException("[401] 请求参数有误");
         }
 
-        boolean result1 = followService.unfollowShop(targetId,followerId);
-        boolean result2 = shopService.lowShopFollows(targetId);
-        boolean result3 = userService.lowFollowingShops(followerId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1&&result2&&result3){
-            Map<String, Object> responseData = Map.of(
-                    "message", "取消关注商铺成功"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始取消关注商铺事务：" + tx.getXid());
+
+            boolean result1 = followService.unfollowShop(targetId, followerId);
+            boolean result2 = shopService.lowShopFollows(targetId);
+            boolean result3 = userService.lowFollowingShops(followerId);
+
+            if (!result1 || !result2 || !result3) {
+                LoggingFramework.warning("取消关注商铺失败，准备回滚事务");
+                tx.rollback();
+                throw new FollowException("[400] 取消关注商铺失败");
+            }
+
+            LoggingFramework.info("取消关注商铺成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "取消关注商铺成功");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else{
-            throw new FollowException("[400] 取消关注商铺失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("取消关注商铺事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new FollowException("[500] 取消关注商铺异常：" + e.getMessage());
         }
     }
 

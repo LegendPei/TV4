@@ -23,13 +23,6 @@ public class LoggingFramework {
     //配置日志文件和格式
     static {
         try {
-            /*移除默认的处理器，防止在控制台打印两遍
-            Logger rootLogger = LogManager.getLogManager().getLogger("");
-            Handler[] handlers = rootLogger.getHandlers();
-            for (Handler handler : handlers) {
-                rootLogger.removeHandler(handler);
-            }
-            */
             //加载配置文件
             String configFileName = "application.properties";
             Properties properties = LoadProperties.load(configFileName);

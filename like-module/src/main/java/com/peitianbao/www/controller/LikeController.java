@@ -7,7 +7,11 @@ import com.peitianbao.www.exception.LikeException;
 import com.peitianbao.www.model.Likes;
 import com.peitianbao.www.service.LikeService;
 import com.peitianbao.www.springframework.annontion.*;
+import com.peitianbao.www.util.LoggingFramework;
 import com.peitianbao.www.util.ResponseUtil;
+import io.seata.core.context.RootContext;
+import io.seata.tm.api.GlobalTransaction;
+import io.seata.tm.api.GlobalTransactionContext;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -39,20 +43,43 @@ public class LikeController {
         Integer targetId = like.getTargetId();
         Integer likerId = like.getLikerId();
 
-        if(targetId == null || likerId == null) {
+        if (targetId == null || likerId == null) {
             throw new LikeException("[401] 请求参数有误");
         }
 
-        boolean result1 = likeService.commentLike(targetId, likerId);
-        boolean result2 = commentService.incrementCommentLikes(targetId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1 && result2) {
-            Map<String, Object> responseData = Map.of(
-                    "message", "评论成功点赞"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+
+            LoggingFramework.info("开始事务：" + tx.getXid());
+
+            boolean result1 = likeService.commentLike(targetId, likerId);
+            boolean result2 = commentService.incrementCommentLikes(targetId);
+
+            if (!result1 || !result2) {
+                LoggingFramework.warning("点赞失败，准备回滚事务");
+                tx.rollback();
+                throw new LikeException("[400] 点赞失败");
+            }
+
+            LoggingFramework.info("点赞成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "评论成功点赞");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else {
-            throw new LikeException("[400] 点赞失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+            throw new LikeException("[500] 点赞异常");
         }
     }
 
@@ -64,20 +91,43 @@ public class LikeController {
         Integer targetId = like.getTargetId();
         Integer likerId = like.getLikerId();
 
-        if(targetId == null || likerId == null) {
+        if (targetId == null || likerId == null) {
             throw new LikeException("[401] 请求参数有误");
         }
 
-        boolean result1 = likeService.shopLike(targetId, likerId);
-        boolean result2 = shopService.incrementShopLikes(targetId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1 && result2) {
-            Map<String, Object> responseData = Map.of(
-                    "message", "商铺成功点赞"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始商铺点赞事务：" + tx.getXid());
+
+            boolean result1 = likeService.shopLike(targetId, likerId);
+            boolean result2 = shopService.incrementShopLikes(targetId);
+
+            if (!result1 || !result2) {
+                LoggingFramework.warning("商铺点赞失败，准备回滚事务");
+                tx.rollback();
+                throw new LikeException("[400] 点赞失败");
+            }
+
+            LoggingFramework.info("商铺点赞成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "商铺成功点赞");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else {
-            throw new LikeException("[400] 点赞失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("商铺点赞事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new LikeException("[500] 商铺点赞异常：" + e.getMessage());
         }
     }
 
@@ -89,20 +139,43 @@ public class LikeController {
         Integer targetId = like.getTargetId();
         Integer likerId = like.getLikerId();
 
-        if(targetId == null || likerId == null) {
+        if (targetId == null || likerId == null) {
             throw new LikeException("[401] 请求参数有误");
         }
 
-        boolean result1 = likeService.blogLike(targetId, likerId);
-        boolean result2 = blogService.incrementBlogLikes(targetId);
+        GlobalTransaction tx = GlobalTransactionContext.getCurrentOrCreate();
 
-        if(result1 && result2) {
-            Map<String, Object> responseData = Map.of(
-                    "message", "动态成功点赞"
-            );
+        try {
+            tx.begin(60000, "my_test_tx_group");
+            LoggingFramework.info("开始动态点赞事务：" + tx.getXid());
+
+            boolean result1 = likeService.blogLike(targetId, likerId);
+            boolean result2 = blogService.incrementBlogLikes(targetId);
+
+            if (!result1 || !result2) {
+                LoggingFramework.warning("动态点赞失败，准备回滚事务");
+                tx.rollback();
+                throw new LikeException("[400] 点赞失败");
+            }
+
+            LoggingFramework.info("动态点赞成功，提交事务");
+            tx.commit();
+
+            Map<String, Object> responseData = Map.of("message", "动态成功点赞");
             ResponseUtil.sendSuccessResponse(resp, responseData);
-        }else {
-            throw new LikeException("[400] 点赞失败");
+
+        } catch (Exception e) {
+            LoggingFramework.severe("发生异常，强制回滚事务: " + e.getMessage());
+            try {
+                if (tx != null && RootContext.inGlobalTransaction()) {
+                    tx.rollback();
+                    LoggingFramework.info("动态点赞事务已手动回滚");
+                }
+            } catch (Exception rollbackEx) {
+                LoggingFramework.severe("事务回滚失败: " + rollbackEx.getMessage());
+            }
+
+            throw new LikeException("[500] 动态点赞异常：" + e.getMessage());
         }
     }
 

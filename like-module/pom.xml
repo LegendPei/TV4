@@ -39,6 +39,11 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-all</artifactId>
+        </dependency>
+
         <!-- MySQL JDBC 驱动 -->
         <dependency>
             <groupId>com.mysql</groupId>
