@@ -195,4 +195,38 @@ public class ShopController {
             throw new ShopException("[404] 商铺信息不存在");
         }
     }
+
+    /**
+     * 商铺刷新Token
+     */
+    @RequestMapping(value = "/shopRefreshToken", methodType = RequestMethod.POST)
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Integer shopId = (Integer) request.getAttribute("shopId");
+        if (shopId == null) {
+            throw new ShopException("[401] 身份未认证或 Token 失效");
+        }
+
+        try (Jedis jedis = RedisUtil.getJedis()) {
+            String redisKey = "shop:refresh:" + shopId;
+            String cachedRefreshToken = jedis.get(redisKey);
+
+            String refreshToken = request.getHeader("Authorization").replace("Bearer ", "").trim();
+
+            if (!refreshToken.equals(cachedRefreshToken)) {
+                throw new ShopException("[401] Refresh Token 已失效或不存在");
+            }
+
+            String newAccessToken = JwtUtil.generateAccessToken(shopId);
+
+            jedis.setex("shop:access:" + shopId, (JwtUtil.EXPIRATION_TIME / 1000), newAccessToken);
+
+            Map<String, Object> responseData = Map.of(
+                    "message", "Token 刷新成功",
+                    "data", Map.of("token", newAccessToken)
+            );
+            ResponseUtil.sendSuccessResponse(response, responseData);
+        } catch (Exception e) {
+            throw new ShopException("[500] 服务器错误" );
+        }
+    }
 }

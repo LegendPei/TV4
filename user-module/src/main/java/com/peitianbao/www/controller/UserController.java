@@ -166,4 +166,38 @@ public class UserController {
             throw new UserException("[404] 用户信息不存在");
         }
     }
+
+    /**
+     * 用户刷新Token
+     */
+    @RequestMapping(value = "/userRefreshToken", methodType = RequestMethod.POST)
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response){
+        Integer userId = (Integer) request.getAttribute("userId");
+        if (userId == null) {
+            throw new UserException("[401] 身份未认证或 Token 失效");
+        }
+
+        try (Jedis jedis = RedisUtil.getJedis()) {
+            String redisKey = "user:refresh:" + userId;
+            String cachedRefreshToken = jedis.get(redisKey);
+
+            String refreshToken = request.getHeader("Authorization").replace("Bearer ", "").trim();
+
+            if (!refreshToken.equals(cachedRefreshToken)) {
+                throw new UserException("[401] Refresh Token已失效或不存在");
+            }
+
+            String newAccessToken = JwtUtil.generateAccessToken(userId);
+
+            jedis.setex("user:access:" + userId, (JwtUtil.EXPIRATION_TIME / 1000), newAccessToken);
+
+            Map<String, Object> responseData = Map.of(
+                    "message", "Token 刷新成功",
+                    "data", Map.of("token", newAccessToken)
+            );
+            ResponseUtil.sendSuccessResponse(response, responseData);
+        } catch (Exception e) {
+            throw new UserException("[500] 服务器错误" );
+        }
+    }
 }
