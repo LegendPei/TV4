@@ -87,9 +87,6 @@ public class DispatcherServlet extends HttpServlet {
 
             // 调用方法并返回结果
             Object result = method.invoke(controller, args);
-
-            // 发送成功响应
-            ResponseUtil.sendSuccessResponse(resp, result);
         } catch (InvocationTargetException e) {
             // 捕获目标方法抛出的异常
             Throwable cause = e.getCause();

@@ -78,7 +78,7 @@ public class ShopController {
         String shopInfo = shopsPo.getShopInfo();
 
         //调用Service层进行注册
-        boolean result = shopService.shopRegister(shopAccount, shopPassword, shopName, shopAddress, shopInfo);
+        boolean result = shopService.shopRegister(shopName, shopAccount, shopPassword, shopAddress, shopInfo);
 
         if (result) {
             //注册成功，返回成功响应
