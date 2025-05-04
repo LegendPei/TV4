@@ -1,5 +1,7 @@
 package com.peitianbao.www.util;
 
+import io.seata.rm.datasource.ConnectionProxy;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -16,7 +18,7 @@ public class ConnectionPool implements AutoCloseable {
     private final String databaseUrl;
     private final String user;
     private final String password;
-    private final BlockingQueue<Connection> connectionPool;
+    protected final BlockingQueue<Connection> connectionPool;
     private boolean isClosed = false;
 
     public ConnectionPool(String configFileName) {
@@ -152,4 +154,5 @@ public class ConnectionPool implements AutoCloseable {
         isClosed = true;
         LoggingFramework.info("连接池已成功关闭");
     }
+
 }

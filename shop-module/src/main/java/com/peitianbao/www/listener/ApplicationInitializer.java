@@ -3,10 +3,7 @@ package com.peitianbao.www.listener;
 import com.peitianbao.www.springframework.annontion.DubboService;
 import com.peitianbao.www.springframework.ioc.BeanFactory;
 import com.peitianbao.www.springframework.util.ClassScanner;
-import com.peitianbao.www.util.ConnectionPool;
-import com.peitianbao.www.util.LoadProperties;
-import com.peitianbao.www.util.LoggingFramework;
-import com.peitianbao.www.util.SqlSession;
+import com.peitianbao.www.util.*;
 import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.ProtocolConfig;
 import org.apache.dubbo.config.RegistryConfig;
@@ -16,6 +13,7 @@ import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Properties;
 
@@ -42,12 +40,30 @@ public class ApplicationInitializer implements ServletContextListener {
                 System.setProperty(key, properties.getProperty(key));
             }
 
-            //初始化连接池
+            String applicationId = "shop-service";
+            String txServiceGroup = "my_test_tx_group";
+
+            SeataClientBootstrap.init(applicationId, txServiceGroup);
+
+            System.out.println("Seata 客户端已成功初始化");
+
+            // 初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
-            //注册连接池到BeanFactory
-            BeanFactory.registerBean(ConnectionPool.class, "connectionPool", connectionPool);
-            //创建SqlSession并注册到容器
-            SqlSession sqlSession = new SqlSession(connectionPool);
+
+            // 包装为标准数据源
+            DataSource rawDataSource = new PooledDataSource(connectionPool);
+
+            // 是否启用 Seata？
+            boolean enableSeata = Boolean.parseBoolean(System.getProperty("seata.enabled", "false"));
+            DataSource finalDataSource = enableSeata
+                    ? SeataClientBootstrap.wrapDataSource(rawDataSource)
+                    : rawDataSource;
+
+            // 注册到容器中（名称不变，类型升级为 DataSource）
+            BeanFactory.registerBean(DataSource.class, "connectionPool", finalDataSource);
+
+            // 创建 SqlSession 并注册到容器
+            SqlSession sqlSession = new SqlSession(finalDataSource);
             BeanFactory.registerBean(SqlSession.class, "sqlSession", sqlSession);
 
             //初始化框架，扫描并注册所有Controller、Service和Dao

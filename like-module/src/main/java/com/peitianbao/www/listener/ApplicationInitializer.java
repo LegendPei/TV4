@@ -12,6 +12,7 @@ import org.apache.dubbo.config.bootstrap.DubboBootstrap;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Properties;
@@ -20,7 +21,6 @@ import java.util.Properties;
  * @author leg
  */
 public class ApplicationInitializer implements ServletContextListener {
-
     private static boolean initialized = false;
 
     @Override
@@ -32,19 +32,35 @@ public class ApplicationInitializer implements ServletContextListener {
                 System.out.println("ApplicationInitializer have begin");
                 return;
             }
-
             // 加载配置文件
             Properties properties = LoadProperties.load("application.properties");
             for (String key : properties.stringPropertyNames()) {
                 System.setProperty(key, properties.getProperty(key));
             }
+            String applicationId = "like-service";
+            String txServiceGroup = "my_test_tx_group";
+
+            SeataClientBootstrap.init(applicationId, txServiceGroup);
+
+            System.out.println("✅ Seata 客户端已成功初始化");
 
             // 初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
-            BeanFactory.registerBean(ConnectionPool.class, "connectionPool", connectionPool);
+
+            // 包装为标准数据源
+            DataSource rawDataSource = new PooledDataSource(connectionPool);
+
+            // 是否启用 Seata？
+            boolean enableSeata = Boolean.parseBoolean(System.getProperty("seata.enabled", "false"));
+            DataSource finalDataSource = enableSeata
+                    ? SeataClientBootstrap.wrapDataSource(rawDataSource)
+                    : rawDataSource;
+
+            // 注册到容器中（名称不变，类型升级为 DataSource）
+            BeanFactory.registerBean(DataSource.class, "connectionPool", finalDataSource);
 
             // 创建 SqlSession 并注册到容器
-            SqlSession sqlSession = new SqlSession(connectionPool);
+            SqlSession sqlSession = new SqlSession(finalDataSource);
             BeanFactory.registerBean(SqlSession.class, "sqlSession", sqlSession);
 
             // 初始化框架，扫描并注册所有 Controller、Service 和 Dao
@@ -58,7 +74,6 @@ public class ApplicationInitializer implements ServletContextListener {
 
             // 处理 @DubboReference 注解的注入
             processDubboReferenceAnnotations(context);
-
             // 标记为已初始化
             initialized = true;
         } catch (Exception e) {
@@ -167,19 +182,5 @@ public class ApplicationInitializer implements ServletContextListener {
 
         // 注入代理对象
         field.set(bean, proxyInstance);
-    }
-
-    /**
-     * 根据服务名称获取应用名称
-     */
-    private String getApplicationNameFromConfig(String serviceName, ServletContext context) {
-        return context.getInitParameter(serviceName + ".dubbo.application.name");
-    }
-
-    /**
-     * 获取注册中心地址
-     */
-    private String getRegistryAddress(ServletContext context) {
-        return context.getInitParameter("dubbo.registry.address");
     }
 }

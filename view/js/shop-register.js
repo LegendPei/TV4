@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 console.log("注册响应:", data);
                 alert("注册成功！");
-                window.location.href = "shop-login.html"; // 跳转到登录页
+                window.location.href = "index.html"; // 跳转到登录页
             })
             .catch(error => {
                 console.error("注册出错:", error);

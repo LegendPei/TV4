@@ -1,5 +1,6 @@
 package com.peitianbao.www.util;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,11 +14,24 @@ import java.util.Map;
  */
 public class SqlSession implements AutoCloseable {
     private final ConnectionPool connectionPool;
+    private final DataSource dataSource;
     private final Connection connection;
+    private final boolean isExternalConnection;
 
+    // 老构造函数：保持兼容性，用于不使用 Seata 的模块
     public SqlSession(ConnectionPool connectionPool) throws InterruptedException, SQLException {
         this.connectionPool = connectionPool;
+        this.dataSource = null;
         this.connection = connectionPool.getConnection();
+        this.isExternalConnection = false;
+    }
+
+    // 新构造函数：用于支持 Seata 的模块
+    public SqlSession(DataSource dataSource) throws SQLException {
+        this.connectionPool = null;
+        this.dataSource = dataSource;
+        this.connection = dataSource.getConnection();
+        this.isExternalConnection = true;
     }
 
     public int executeUpdate(String sqlId, Map<String, Object> params) throws SQLException {

@@ -20,6 +20,11 @@
             <artifactId>dom4j</artifactId>
         </dependency>
 
+
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-all</artifactId>
+        </dependency>
         <!-- Redis 依赖 -->
         <dependency>
             <groupId>redis.clients</groupId>
