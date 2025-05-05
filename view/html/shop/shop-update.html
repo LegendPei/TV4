@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>更新店铺信息</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+  <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 更新表单 -->
+<div class="form-container">
+  <h2>更新店铺信息</h2>
+  <form id="update-shop-form">
+    <label for="shopAccount">账号:</label>
+    <input type="text" id="shopAccount" name="shopAccount" required>
+
+    <label for="shopPassword">密码:</label>
+    <input type="password" id="shopPassword" name="shopPassword" required>
+
+    <label for="shopName">店铺名称:</label>
+    <input type="text" id="shopName" name="shopName" required>
+
+    <label for="shopAddress">地址:</label>
+    <input type="text" id="shopAddress" name="shopAddress" required>
+
+    <label for="shopInfo">店铺简介:</label>
+    <textarea id="shopInfo" name="shopInfo" rows="4" required></textarea>
+
+    <button type="submit">提交更新</button>
+    <p><a href="shop-index.html">返回首页</a></p>
+  </form>
+</div>
+
+<!-- 引入 JS 文件 -->
+<script src="../../js/shop/shop-update.js"></script>
+
+</body>
+</html>

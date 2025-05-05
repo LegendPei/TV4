@@ -89,12 +89,12 @@
         </update>
         <update id="incrementShopFollows">
             UPDATE shops
-            SET shop_follows = shop_follows + 1
+            SET shop_followers = shop_followers + 1
             WHERE shop_id = #{shopId}
         </update>
         <update id="lowShopFollows">
             UPDATE shops
-            SET shop_follows = shop_follows - 1
+            SET shop_followers = shop_followers - 1
             WHERE shop_id = #{shopId}
         </update>
     </mapper>

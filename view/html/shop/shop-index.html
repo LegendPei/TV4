@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>商铺首页</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+  <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 左上角操作按钮 -->
+<div class="top-left-buttons">
+  <a href="shop-update.html" class="btn small-btn">更新商铺信息</a>
+  <a href="#" id="delete-shop-btn" class="btn small-btn danger-btn">注销商铺</a>
+  <a href="#" class="btn small-btn" data-action="logout">退出登录</a>
+</div>
+
+<!-- 商铺信息展示区域 -->
+<div class="form-container" id="shop-info-container">
+  <h2 id="shop-name">加载中...</h2>
+
+  <div class="info-group">
+    <p>
+      <strong>账号：</strong><span id="shopAccount">-</span>
+    </p>
+    <p>
+      <strong>地址：</strong><span id="shopAddress">-</span>
+    </p>
+    <p>
+      <strong>简介：</strong><span id="shopInfo">-</span>
+    </p>
+    <p>
+      <strong>粉丝数：</strong>
+      <span id="shopFollowers">0</span>
+      <a href="shop-followers.html" data-action="view-followers" class="btn small-btn">查看粉丝列表</a>
+    </p>
+    <p>
+      <strong>点赞数：</strong>
+      <span id="shopLikes">0</span>
+      <a href="shop-likes.html" data-action="view-likes" class="btn small-btn">查看点赞记录</a>
+    </p>
+  </div>
+</div>
+<!-- 新增：功能按钮区域 -->
+<div class="feature-buttons">
+  <a href="shop-comment.html" class="btn feature-btn">商铺评论</a>
+  <a href="shop-posts.html" class="btn feature-btn">商铺动态</a>
+  <a href="shop-flashsale.html" class="btn feature-btn">秒杀活动</a>
+</div>
+<script src="../../js/shop/shop-index.js"></script>
+
+</body>
+</html>

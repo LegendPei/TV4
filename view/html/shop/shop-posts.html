@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>商铺动态</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="shop-index.html" class="back-btn">返回首页</a>
+<!-- 新增按钮 -->
+<!-- 页面内容 -->
+<div class="form-container">
+    <h2 id="page-title">加载中...</h2>
+
+    <!-- 排序按钮组（竖排） -->
+    <div class="sort-buttons-vertical">
+        <button id="sort-time" class="btn small-btn active">按时间排序</button>
+        <button id="sort-likes" class="btn small-btn">按点赞数排序</button>
+        <button id="sort-collections" class="btn small-btn">按收藏数排序</button>
+        <a href="shop-createBlog.html" class="btn small-btn">发布新动态</a>
+    </div>
+
+    <!-- 动态列表 -->
+    <ul id="posts-list" class="list-group">
+        <!-- 动态插入评论项 -->
+    </ul>
+</div>
+
+<script src="../../js/shop/shop-posts.js"></script>
+
+</body>
+</html>

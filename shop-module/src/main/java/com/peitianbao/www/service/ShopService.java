@@ -87,9 +87,6 @@ public class ShopService implements com.peitianbao.www.api.ShopService {
 
             RedisUtil.set(cacheKey, gson.toJson(shop), getRandomExpireTime());
         }
-        if (!shop.getShopPassword().equals(shopPassword)) {
-            throw new ShopException("登录失败：账号或密码错误");
-        }
         return new ShopsDTO(shop);
     }
 

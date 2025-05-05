@@ -43,7 +43,7 @@ body {
 /* 统一按钮样式 */
 .btn {
     background-color: #007bff;
-    color: white;
+    color: black;
     border: none;
     border-radius: 8px;
     padding: 15px 30px;
@@ -144,4 +144,343 @@ body {
 
 .form-container a:hover {
     text-decoration: underline;
+}
+/* 左上角按钮容器 */
+.top-left-buttons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 999;
+}
+
+/* 小型按钮样式 */
+.small-btn {
+    font-size: 14px;
+    padding: 8px 16px;
+}
+
+/* 注销按钮红色样式 */
+.danger-btn {
+    background-color: #dc3545;
+}
+
+.danger-btn:hover {
+    background-color: #c82333;
+}
+
+.info-group p {
+    margin: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.info-group span {
+    flex: 1;
+    margin-right: 10px;
+}
+
+/* 返回按钮 */
+.back-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+    font-size: 16px;
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.back-btn:hover {
+    background-color: #5a6268;
+}
+
+/* 列表样式 */
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-group-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background-color: #f1f3f5;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.list-group-item strong {
+    display: inline-block;
+    width: 80px;
+}
+
+.likes-table {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.like-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f1f3f5;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.like-item .user-info,
+.like-item .like-time {
+    flex: 1;
+    text-align: left;
+    margin-right: 10px;
+}
+
+.like-item .like-time {
+    text-align: right;
+}
+
+.like-item .user-name {
+    font-weight: bold;
+    display: block;
+}
+
+.like-item .user-id {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* 功能按钮容器 */
+.feature-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 40px;
+}
+
+/* 每个功能按钮 */
+.feature-btn {
+    flex: 1;
+    max-width: 200px;
+    text-align: center;
+    padding: 15px 20px;
+    background-color: #007bff; /* 蓝色背景 */
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.feature-btn:hover {
+    background-color: #0056b3;
+}
+
+/* 垂直排列按钮容器 */
+.sort-buttons-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 按钮之间空隙 */
+}
+
+/* 调整按钮大小和间距 */
+.sort-buttons-vertical .btn {
+    font-size: 14px;
+    padding: 8px 16px;
+    width: 100%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* 可选：让按钮更紧凑一点 */
+.sort-buttons-vertical {
+    max-width: 120px;
+}
+
+/* 竖向排序按钮 */
+.sort-buttons-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 120px;
+}
+
+/* 每个动态项样式 */
+.list-group-item {
+    background-color: #f1f3f5;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.post-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.post-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.post-meta {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.post-actions {
+    margin-left: 20px;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    margin-bottom: 0;
+}
+
+#blogImage {
+    border: none;
+    padding: 0;
+    background-color: transparent;
+}
+.btn {
+    color: white;
+    text-decoration: none; /* 如果是 <a> 标签 */
+    padding: 10px 16px;
+    border-radius: 5px;
+    display: inline-block;
+    font-size: 14px;
+    background-color: #007bff; /* 蓝色背景 */
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+.media-preview {
+    margin-top: 16px;
+    max-width: 100%;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.media-preview img,
+.media-preview video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.blog-detail-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.media-preview {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.media-preview img,
+.media-preview video {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.blog-detail-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.media-preview {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.media-preview img,
+.media-preview video {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.blog-content {
+    font-size: 16px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    margin-top: 20px;
+    color: #333;
+}
+
+.blog-meta {
+    margin-top: 20px;
+    font-size: 15px;
+    color: #6c757d;
+}
+.comments-section {
+    margin-top: 40px;
+}
+
+.sort-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.table-container {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 15px;
+}
+
+.table-header,
+.table-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.table-header {
+    font-weight: bold;
+    color: #555;
+    border-bottom: 2px solid #ccc;
+}
+
+.table-cell {
+    flex: 1;
+    text-align: left;
+    min-width: 100px;
+}
+
+.table-cell.time,
+.table-cell.likes {
+    text-align: center;
 }

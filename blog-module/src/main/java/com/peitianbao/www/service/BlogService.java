@@ -42,11 +42,20 @@ public class BlogService implements com.peitianbao.www.api.BlogService {
     public boolean createBlog(Blogs blog) {
         boolean result = blogDao.createBlog(blog);
         if (result) {
-            // 清理相关缓存
             RedisUtil.delete(BLOG_INFO_PREFIX + blog.getBlogId());
             RedisUtil.delete(USER_BLOGS_PREFIX + blog.getAuthorId() + ":time");
             RedisUtil.delete(USER_BLOGS_PREFIX + blog.getAuthorId() + ":likes");
             RedisUtil.delete(USER_BLOGS_PREFIX + blog.getAuthorId() + ":collections");
+
+            Integer shopId = blog.getAuthorId();
+
+            List<Blogs> blogsTime = blogDao.getShopBlogs(shopId, "time");
+            List<Blogs> blogsLikes = blogDao.getShopBlogs(shopId, "likes");
+            List<Blogs> blogsCollections = blogDao.getShopBlogs(shopId, "collections");
+
+            writeBlogsToCache(SHOP_BLOGS_PREFIX + shopId + ":time", blogsTime);
+            writeBlogsToCache(SHOP_BLOGS_PREFIX + shopId + ":likes", blogsLikes);
+            writeBlogsToCache(SHOP_BLOGS_PREFIX + shopId + ":collections", blogsCollections);
 
             return true;
         } else {
@@ -296,5 +305,16 @@ public class BlogService implements com.peitianbao.www.api.BlogService {
      */
     private int getRandomExpireTime() {
         return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
+    }
+
+    private void writeBlogsToCache(String cacheKey, List<Blogs> blogs) {
+        Gson gson = GsonFactory.getGSON();
+        int expireTime = 3600 + new Random().nextInt(300);
+
+        if (blogs == null || blogs.isEmpty()) {
+            RedisUtil.set(cacheKey, "[]", 300);
+        } else {
+            RedisUtil.set(cacheKey, gson.toJson(blogs), expireTime);
+        }
     }
 }

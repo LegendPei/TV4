@@ -156,7 +156,7 @@ public class ShopDaoImpl implements ShopDao {
         try {
             //准备参数
             Map<String, Object> params = new HashMap<>();
-            params.put("account", shopAccount);
+            params.put("shopAccount", shopAccount);
 
             //执行查询
             ShopsPO shop = sqlSession.executeQueryForObject("ShopMapper.selectShopByAccount",params,ShopsPO.class);

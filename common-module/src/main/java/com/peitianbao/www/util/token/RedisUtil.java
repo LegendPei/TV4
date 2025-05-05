@@ -16,33 +16,50 @@ import java.util.Properties;
  * @author leg
  */
 public class RedisUtil {
-    private static final JedisPool JEDIS_POOL;
-
-    static {
-        // 配置 JEDIS_POOL 参数
-        String configFileName = "application.properties";
-        Properties properties = LoadProperties.load(configFileName);
-        boolean testOnBorrow = Boolean.parseBoolean(properties.getProperty("jp.testOnBorrow"));
-        int maxTotal = Integer.parseInt(properties.getProperty("jp.maxTotal"));
-        int maxIdle = Integer.parseInt(properties.getProperty("jp.maxIdle"));
-        int minIdle = Integer.parseInt(properties.getProperty("jp.minIdle"));
-        int redisPort = Integer.parseInt(properties.getProperty("jp.redisPort"));
-        String redisHost = properties.getProperty("jp.redisHost");
-
-        JedisPoolConfig config = new JedisPoolConfig();
-        config.setMaxTotal(maxTotal);
-        config.setMaxIdle(maxIdle);
-        config.setMinIdle(minIdle);
-        config.setTestOnBorrow(testOnBorrow);
-
-        // 初始化 JEDIS_POOL
-        JEDIS_POOL = new JedisPool(config, redisHost, redisPort);
-    }
+    private static volatile JedisPool JEDIS_POOL = null;
+    private static final Object INIT_LOCK = new Object();
 
     /**
-     * 获取 Redis 连接
+     * 获取 Redis 连接池资源
      */
     public static Jedis getJedis() {
+        if (JEDIS_POOL == null) {
+            synchronized (INIT_LOCK) {
+                if (JEDIS_POOL == null) {
+                    try {
+                        // 🚨 尝试重新初始化
+                        Properties properties = LoadProperties.load("application.properties");
+
+                        boolean testOnBorrow = Boolean.parseBoolean(properties.getProperty("jp.testOnBorrow"));
+                        int maxTotal = Integer.parseInt(properties.getProperty("jp.maxTotal"));
+                        int maxIdle = Integer.parseInt(properties.getProperty("jp.maxIdle"));
+                        int minIdle = Integer.parseInt(properties.getProperty("jp.minIdle"));
+                        int redisPort = Integer.parseInt(properties.getProperty("jp.redisPort"));
+                        String redisHost = properties.getProperty("jp.redisHost");
+
+                        JedisPoolConfig config = new JedisPoolConfig();
+                        config.setMaxTotal(maxTotal);
+                        config.setMaxIdle(maxIdle);
+                        config.setMinIdle(minIdle);
+                        config.setTestOnBorrow(testOnBorrow);
+
+                        // 创建连接池
+                        JEDIS_POOL = new JedisPool(config, redisHost, redisPort);
+                    } catch (Exception e) {
+                        System.err.println("RedisUtil 初始化失败！");
+                        System.err.println("错误类型: " + e.getClass().getName());
+                        System.err.println("错误信息: " + e.getMessage());
+                        e.printStackTrace(); // 打印完整堆栈跟踪
+                        throw new RuntimeException("RedisUtil 初始化失败", e);
+                    }
+                }
+            }
+        }
+
+        if (JEDIS_POOL == null) {
+            throw new RuntimeException("JedisPool 未正确初始化");
+        }
+
         return JEDIS_POOL.getResource();
     }
 
@@ -141,7 +158,4 @@ public class RedisUtil {
             throw new RuntimeException("加载 Lua 脚本失败：" + scriptName, e);
         }
     }
-
-
-
 }

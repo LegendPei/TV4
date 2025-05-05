@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商铺登录</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 登录表单 -->
+<div class="form-container">
+    <h2>商铺登录</h2>
+    <form id="login-form">
+        <label for="shopAccount">账号:</label>
+        <input type="text" id="shopAccount" name="shopAccount" required>
+
+        <label for="shopPassword">密码:</label>
+        <input type="password" id="shopPassword" name="shopPassword" required>
+
+        <button type="submit">立即登录</button>
+        <p>还没有账号？<a href="shop-register.html">去注册</a></p>
+    </form>
+</div>
+
+<!-- 引入 JS 文件 -->
+<script src="../../js/shop/shop-login.js"></script>
+
+</body>
+</html>

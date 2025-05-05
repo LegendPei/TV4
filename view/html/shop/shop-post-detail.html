@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>动态详情</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="shop-posts.html" class="back-btn">返回动态列表</a>
+
+<!-- 动态详情容器 -->
+<div class="form-container blog-detail-container">
+    <h2 id="blog-title">加载中...</h2>
+
+    <!-- 文件预览区域 -->
+    <div id="media-preview" class="media-preview"></div>
+
+    <!-- 动态内容 -->
+    <p id="blog-content" class="blog-content">内容加载中...</p>
+
+    <!-- 其他信息 -->
+    <div class="blog-meta">
+        <p><strong>发布时间：</strong><span id="blog-time">-</span></p>
+        <p><strong>点赞数：</strong><span id="blog-likes">0</span></p>
+        <p><strong>收藏数：</strong><span id="blog-collections">0</span></p>
+        <p><strong>动态类型：</strong><span id="blog-type">-</span></p>
+    </div>
+</div>
+<!-- 评论区域 -->
+<div class="comments-section">
+    <h3>评论列表</h3>
+
+    <!-- 排序按钮组 -->
+    <div class="sort-buttons">
+        <button id="sort-time" class="btn small-btn active">按时间排序</button>
+        <button id="sort-likes" class="btn small-btn">按点赞数排序</button>
+    </div>
+
+    <!-- 评论表格式列表 -->
+    <div class="table-container">
+        <div class="table-header">
+            <div class="table-cell">用户名</div>
+            <div class="table-cell">评论内容</div>
+            <div class="table-cell">评论时间</div>
+            <div class="table-cell">点赞数</div>
+        </div>
+        <ul id="comments-list" class="table-body">
+            <!-- 动态插入评论项 -->
+        </ul>
+    </div>
+</div>
+<script src="../../js/shop/shop-blog.js"></script>
+
+</body>
+</html>

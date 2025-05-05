@@ -28,9 +28,9 @@ public class BlogDaoImpl implements BlogDao {
             params.put("blogName", blog.getBlogName());
             params.put("targetId", blog.getTargetId());
             params.put("authorId", blog.getAuthorId());
-            params.put("blogContent", blog.getBlogName());
-            params.put("filePath", blog.getTargetId());
-            params.put("blogType", blog.getAuthorId());
+            params.put("blogContent", blog.getBlogContent());
+            params.put("filePath", blog.getFilePath());
+            params.put("blogType", blog.getBlogType());
 
             LoggingFramework.info("尝试创建动态：" + blog.getBlogName());
             int result = sqlSession.executeUpdate("BlogMapper.insertBlog", params);

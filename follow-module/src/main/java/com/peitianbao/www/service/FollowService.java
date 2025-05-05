@@ -177,7 +177,7 @@ public class FollowService implements com.peitianbao.www.api.FollowService {
             }
 
             followedUsers = followsList.stream()
-                    .map(Follows::getTargetId)
+                    .map(Follows::getFollowerId)
                     .collect(Collectors.toList());
 
             RedisUtil.set(cacheKey, gson.toJson(followedUsers), getRandomExpireTime());
@@ -207,7 +207,7 @@ public class FollowService implements com.peitianbao.www.api.FollowService {
             }
 
             followedUsers = followsList.stream()
-                    .map(Follows::getTargetId)
+                    .map(Follows::getFollowerId)
                     .collect(Collectors.toList());
 
 

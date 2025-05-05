@@ -2,7 +2,7 @@
     <!-- 动态表相关操作 -->
     <mapper namespace="BlogMapper">
         <insert id="insertBlog">
-            INSERT INTO blogs (target_id, blog_name, author_id，blog_content, file_path, blog_type)
+            INSERT INTO blogs (target_id, blog_name, author_id,blog_content, file_path, blog_type)
             VALUES (#{targetId}, #{blogName}, #{authorId},#{blogContent}, #{filePath}, #{blogType})
         </insert>
         <insert id="insertBlogCollection">

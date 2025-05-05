@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>发布新动态</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="shop-index.html" class="back-btn">返回首页</a>
+
+<!-- 发布动态表单 -->
+<div class="form-container">
+    <h2>发布新动态</h2>
+
+    <form id="create-blog-form">
+        <!-- 动态标题 -->
+        <label>
+            标题：
+            <input type="text" id="blogName" required />
+        </label>
+
+        <!-- 动态内容 -->
+        <label>
+            内容：
+            <textarea id="blogContent" rows="5" required></textarea>
+        </label>
+
+        <!-- 动态类型选择 -->
+        <label>
+            类型：
+            <div class="radio-group">
+                <label><input type="radio" name="blogType" value="1" checked> 美食推荐</label>
+                <label><input type="radio" name="blogType" value="2"> 商铺推荐</label>
+                <label><input type="radio" name="blogType" value="3"> 秒杀分享</label>
+            </div>
+        </label>
+
+        <!-- 文件上传 -->
+        <label>
+            媒体文件（可选）：
+            <input type="file" id="blogMedia" accept="image/*,video/*" />
+        </label>
+
+        <!-- 文件预览区域 -->
+        <div id="media-preview" class="media-preview"></div>
+
+        <!-- 提交按钮 -->
+        <button type="submit" class="btn">提交动态</button>
+    </form>
+</div>
+
+<script src="../../js/shop/shop-createBlog.js"></script>
+
+</body>
+</html>

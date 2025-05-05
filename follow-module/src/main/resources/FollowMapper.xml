@@ -30,7 +30,7 @@
         <select id="selectFollowingShops" resultType="com.peitianbao.www.model.Follows">
             SELECT
             shop_id AS targetId,
-            follower_id AS followerId,
+            follower_id AS followerId
             FROM
             shop_follows
             WHERE
@@ -40,7 +40,7 @@
         <select id="selectFollowingUsers" resultType="com.peitianbao.www.model.Follows">
             SELECT
             user_id AS targetId,
-            follower_id AS followerId,
+            follower_id AS followerId
             FROM
             user_follows
             WHERE
@@ -50,7 +50,7 @@
         <select id="selectUserFollowed" resultType="com.peitianbao.www.model.Follows">
             SELECT
             user_id AS targetId,
-            follower_id AS followerId,
+            follower_id AS followerId
             FROM
             user_follows
             WHERE
@@ -60,7 +60,7 @@
         <select id="selectShopFollowed" resultType="com.peitianbao.www.model.Follows">
             SELECT
             shop_id AS targetId,
-            follower_id AS followerId,
+            follower_id AS followerId
             FROM
             shop_follows
             WHERE

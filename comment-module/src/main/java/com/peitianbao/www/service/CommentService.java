@@ -45,6 +45,9 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
         boolean result = commentDao.insertComment(comment);
         if (result) {
             RedisUtil.delete(COMMENT_INFO_PREFIX + comment.getCommentId());
+
+            refreshTargetCommentCache(comment.getTargetId());
+
             return true;
         } else {
             throw new CommentException("评论插入失败");
@@ -83,9 +86,19 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
      * 删除评论
      */
     public boolean deleteComment(Integer commentId) {
+        Comments comment = commentDao.selectCommentByCommentId(commentId);
+        if (comment == null) {
+            throw new CommentException("要删除的评论不存在");
+        }
+
+        Integer targetId = comment.getTargetId();
         boolean result = commentDao.deleteComment(commentId);
+
         if (result) {
             RedisUtil.delete(COMMENT_INFO_PREFIX + commentId);
+
+            refreshTargetCommentCache(targetId);
+
             return true;
         } else {
             throw new CommentException("删除评论失败");
@@ -192,5 +205,22 @@ public class CommentService implements com.peitianbao.www.api.CommentService {
      */
     private int getRandomExpireTime() {
         return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
+    }
+
+    private void refreshTargetCommentCache(Integer targetId) {
+        String[] sortModes = {"time", "likes"};
+        Gson gson = GsonFactory.getGSON();
+
+        for (String sortMode : sortModes) {
+            String cacheKey = COMMENTS_BY_TARGET_PREFIX + targetId + ":" + sortMode;
+
+            List<Comments> commentsList = commentDao.selectCommentsByTargetId(targetId, sortMode);
+
+            if (commentsList != null && !commentsList.isEmpty()) {
+                RedisUtil.set(cacheKey, gson.toJson(commentsList), getRandomExpireTime());
+            } else {
+                RedisUtil.set(cacheKey, "[]", EMPTY_CACHE_EXPIRE_SECONDS);
+            }
+        }
     }
 }

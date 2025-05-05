@@ -82,9 +82,6 @@ public class UserService implements com.peitianbao.www.api.UserService {
             }
             RedisUtil.set(cacheKey, gson.toJson(userPo), getRandomExpireTime());
         }
-        if (!userPo.getUserPassword().equals(userPassword)) {
-            throw new UserException("登录失败：账号或密码错误");
-        }
         return new UsersDTO(userPo);
     }
 
