@@ -9,6 +9,7 @@ import com.peitianbao.www.service.CouponOrderService;
 import com.peitianbao.www.service.CouponService;
 import com.peitianbao.www.springframework.annontion.*;
 import com.peitianbao.www.util.GsonFactory;
+import com.peitianbao.www.util.LoggingFramework;
 import com.peitianbao.www.util.ResponseUtil;
 import com.peitianbao.www.util.VoucherId;
 import com.peitianbao.www.util.token.RedisUtil;
@@ -174,12 +175,15 @@ public class VoucherController {
             throw new VoucherException("[400] 参数缺失");
         }
 
+        LoggingFramework.info("收到秒杀请求：userId=" + userId + ", couponId=" + couponId);
+
         Coupon coupon = couponService.getCouponInfo(couponId);
         if (coupon == null) {
             throw new VoucherException("[401] 秒杀活动不存在");
         }
 
-        //构造键名
+        LoggingFramework.info("当前活动限购数量：" + coupon.getMaxPerUser());
+
         String stockKey = "coupon_stock:" + couponId;
         String userParticipationKey = "coupon:user:participate:" + userId + ":" + couponId;
 
@@ -190,12 +194,10 @@ public class VoucherController {
                 String.valueOf(couponId)
         );
 
-        //加载Lua脚本
         String luaScript = RedisUtil.loadLuaScript("seckill.lua");
 
         try (Jedis jedis = RedisUtil.getJedis()) {
             Object rawResult = jedis.eval(luaScript, keys, args);
-
             String result = rawResult.toString();
 
             switch (result) {
@@ -212,10 +214,8 @@ public class VoucherController {
             long orderId = VoucherId.voucherId("coupon");
             CouponOrder order = new CouponOrder(orderId, couponId, userId);
 
-            //缓存临时订单至Redis
             RedisUtil.set(TEMP_ORDER_PREFIX + orderId, gson.toJson(order), TEMP_ORDER_EXPIRE_SECONDS);
 
-            //返回成功信息
             Map<String, Object> responseData = Map.of(
                     "message", "抢购成功，请前往支付",
                     "orderId", orderId,
@@ -223,7 +223,10 @@ public class VoucherController {
                     "userId", userId
             );
             ResponseUtil.sendSuccessResponse(resp, responseData);
+
         } catch (Exception e) {
+            LoggingFramework.severe("秒杀异常：" + e.getMessage());
+            LoggingFramework.logException(e);
             throw new VoucherException("[500] 秒杀异常：" + e.getMessage());
         }
     }
@@ -244,22 +247,31 @@ public class VoucherController {
             throw new VoucherException("[404] 订单不存在");
         }
 
-        CouponOrder tempOrder = gson.fromJson(cachedOrderJson, CouponOrder.class);
-        if (!tempOrder.getUserId().equals(userId) || !tempOrder.getCouponId().equals(couponId)) {
-            throw new VoucherException("[403] 订单信息不匹配");
-        }
+        try {
+            CouponOrder tempOrder = gson.fromJson(cachedOrderJson, CouponOrder.class);
+            if (!tempOrder.getUserId().equals(userId) || !tempOrder.getCouponId().equals(couponId)) {
+                throw new VoucherException("[403] 订单信息不匹配");
+            }
 
-        //将订单写入数据库
-        boolean createSuccess = couponOrderService.createCouponOrder(tempOrder.getOrderId(),tempOrder.getCouponId(),tempOrder.getUserId());
-        if (!createSuccess) {
-            throw new VoucherException("[500] 订单创建失败");
+            boolean createSuccess = couponOrderService.createCouponOrder(tempOrder.getOrderId(), tempOrder.getCouponId(), tempOrder.getUserId());
+            boolean result = couponService.lowNowCount(tempOrder.getCouponId());
+
+            if (!createSuccess || !result) {
+                throw new VoucherException("[500] 订单创建失败");
+            }
+
+            RedisUtil.delete(tempOrderKey);
+
+            Map<String, Object> responseData = Map.of(
+                    "message", "支付成功",
+                    "orderId", orderId
+            );
+            ResponseUtil.sendSuccessResponse(resp, responseData);
+
+        } catch (Exception e) {
+            LoggingFramework.severe("支付确认异常：" + e.getMessage());
+            throw new VoucherException("[500] 支付确认失败：" + e.getMessage());
         }
-        RedisUtil.delete(tempOrderKey);
-        Map<String, Object> responseData = Map.of(
-                "message", "支付成功",
-                "orderId", orderId
-        );
-        ResponseUtil.sendSuccessResponse(resp, responseData);
     }
 
     /**

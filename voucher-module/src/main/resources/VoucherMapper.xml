@@ -1,6 +1,6 @@
 <mappers>
     <!-- 券表相关操作 -->
-    <mapper namespace="CouponMapper">
+    <mapper namespace="VoucherMapper">
         <insert id="insertCoupon">
             INSERT INTO coupon (coupon_type, discount_amount,min_spend,total_stock,available_stock,start_time,end_time,max_per_user,coupon_name,shop_id)
             VALUES (#{couponType}, #{discountAmount}, #{minSpend},#{totalStock}, #{availableStock}, #{startTime},#{endTime}, #{maxPerUser}, #{couponName},#{shopId})
@@ -16,7 +16,8 @@
             available_stock AS availableStock,
             start_time AS startTime,
             end_time AS endTime,
-            max_per_user AS maxPerUser
+            max_per_user AS maxPerUser,
+            shop_id AS shopId
             FROM
             coupon
             WHERE
@@ -33,7 +34,8 @@
             available_stock AS availableStock,
             start_time AS startTime,
             end_time AS endTime,
-            max_per_user AS maxPerUser
+            max_per_user AS maxPerUser,
+            shop_id AS shopId
             FROM
             coupon
         </select>
@@ -47,9 +49,6 @@
             SET available_stock = available_stock - 1
             WHERE coupon_id = #{couponId}
         </update>
-    </mapper>
-    <!-- 券订单表相关操作 -->
-    <mapper namespace="CouponOrderMapper">
         <insert id="insertCouponOrder">
             INSERT INTO coupon_order (order_id,coupon_id,user_id)
             VALUES (#{orderId}, #{couponId}, #{userId})
@@ -64,7 +63,7 @@
             WHERE
             order_id = #{orderId}
         </select>
-        <select id="countUserParticipation" resultType="int">
+        <select id="countUserParticipation" resultType="Integer">
             SELECT COUNT(*)
             FROM coupon_order
             WHERE user_id = #{userId} AND coupon_id = #{couponId}

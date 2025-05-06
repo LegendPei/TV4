@@ -12,6 +12,9 @@ import com.peitianbao.www.util.token.RedisUtil;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author leg
@@ -42,7 +45,13 @@ public class CouponService {
     public boolean createCoupon(Coupon coupon) {
         boolean result = couponDao.createCoupon(coupon);
         if (result) {
-            RedisUtil.delete(COUPON_ACTIVITIES_STATUS_PREFIX);
+            refreshCouponCache(coupon.getCouponId());
+
+            refreshAllClassifiedCoupons();
+
+            String stockKey = "coupon_stock:" + coupon.getCouponId();
+            RedisUtil.set(stockKey, String.valueOf(coupon.getTotalStock()), 86400);
+
             return true;
         } else {
             throw new VoucherException("创建秒杀活动失败");
@@ -104,6 +113,7 @@ public class CouponService {
      * 获取按状态分类的秒杀活动列表
      */
     public List<Coupon> getCouponActivitiesByStatus(String sortType) {
+        startCacheSyncTask();
         String cacheKey = COUPON_ACTIVITIES_STATUS_PREFIX + ":" + sortType;
 
         String cachedActivities = RedisUtil.get(cacheKey);
@@ -175,5 +185,69 @@ public class CouponService {
      */
     private int getRandomExpireTime() {
         return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
+    }
+
+    /**
+     * 定时任务：每分钟同步一次所有优惠券缓存
+     */
+    private void startCacheSyncTask() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                refreshAllClassifiedCoupons();
+
+                List<Coupon> allCoupons = couponDao.getAllCoupons();
+                if (allCoupons != null) {
+                    for (Coupon coupon : allCoupons) {
+                        refreshCouponCache(coupon.getCouponId());
+
+                        String stockKey = "coupon_stock:" + coupon.getCouponId();
+                        RedisUtil.set(stockKey, String.valueOf(coupon.getTotalStock()), 86400);
+                    }
+                }
+            } catch (Exception e) {
+                throw new VoucherException(e);
+            }
+        }, 0, 60, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 主动刷新某个优惠券的缓存
+     */
+    public void refreshCouponCache(Integer couponId) {
+        String cacheKey = COUPON_INFO_PREFIX + couponId;
+        Coupon coupon = couponDao.getCouponInfo(couponId);
+        if (coupon != null) {
+            RedisUtil.set(cacheKey, gson.toJson(coupon), getRandomExpireTime());
+        } else {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+        }
+    }
+
+    /**
+     * 主动刷新分类缓存（upcoming/ongoing/expired）
+     */
+    public void refreshAllClassifiedCoupons() {
+        List<Coupon> allCoupons = couponDao.getAllCoupons();
+        if (allCoupons == null || allCoupons.isEmpty()) {
+            RedisUtil.set(COUPON_ACTIVITIES_STATUS_PREFIX + ":upcoming", "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(COUPON_ACTIVITIES_STATUS_PREFIX + ":ongoing", "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+            RedisUtil.set(COUPON_ACTIVITIES_STATUS_PREFIX + ":expired", "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+            return;
+        }
+
+        Map<String, List<Coupon>> classified = classifyCouponsByStatus(allCoupons);
+
+        for (Map.Entry<String, List<Coupon>> entry : classified.entrySet()) {
+            String status = entry.getKey();
+            List<Coupon> coupons = entry.getValue();
+            String cacheKey = COUPON_ACTIVITIES_STATUS_PREFIX + ":" + status;
+            if (coupons.isEmpty()) {
+                RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+            } else {
+                RedisUtil.set(cacheKey, gson.toJson(coupons), getRandomExpireTime());
+            }
+        }
     }
 }

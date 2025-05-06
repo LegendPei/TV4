@@ -32,7 +32,7 @@ public class UserController {
         String userAccount=usersPo.getUserAccount();
         String userPassword=usersPo.getUserPassword();
 
-        if(userAccount!=null&&userPassword!=null){
+        if(userAccount==null||userPassword==null){
             throw new UserException("[400] 用户的账号或密码不能为空");
         }
 

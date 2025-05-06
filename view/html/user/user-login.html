@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>用户登录</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 右上角音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+  <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="../index.html" class="back-btn">返回首页</a>
+
+<!-- 登录表单容器 -->
+<div class="form-container">
+  <h2>用户登录</h2>
+
+  <form id="login-form">
+    <!-- 用户账号 -->
+    <label>
+      账号：
+      <input type="text" id="userAccount" required />
+    </label>
+
+    <!-- 密码 -->
+    <label>
+      密码：
+      <input type="password" id="userPassword" required />
+    </label>
+
+    <!-- 提交按钮 -->
+    <button type="submit" class="btn">立即登录</button>
+  </form>
+</div>
+
+<script src="../../js/user/user-login.js"></script>
+
+</body>
+</html>

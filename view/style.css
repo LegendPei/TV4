@@ -484,3 +484,56 @@ body {
 .table-cell.likes {
     text-align: center;
 }
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-left: 20px;
+}
+
+.voucher-list-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.voucher-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    text-align: center;
+}
+
+.voucher-table th, .voucher-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.voucher-table thead {
+    background-color: #007bff;
+    color: white;
+}
+
+.voucher-table tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+.users-list-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.list-group-item {
+    background-color: #f1f3f5;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

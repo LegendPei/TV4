@@ -5,6 +5,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -97,13 +99,36 @@ public class SqlSession implements AutoCloseable {
         }
     }
 
+    public int executeQueryForInt(String sqlId, Map<String, Object> params) throws SQLException {
+        String sql = XmlParse.getSql(sqlId);
+        if (sql == null) {
+            LoggingFramework.severe("执行executeQueryForInt时未找到对应的sql语句:" + sqlId);
+            throw new IllegalArgumentException("未找到对应的sql语句：" + sqlId);
+        }
+
+        sql = replacePlaceholders(sql, params);
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            return 0;
+        }
+    }
     //将占位符替换为实际的参数值
     private String replacePlaceholders(String sql, Map<String, Object> params) {
         for (Map.Entry<String, Object> entry : params.entrySet()) {
-            String value = entry.getValue() instanceof String
-                    ? "'" + entry.getValue() + "'"
-                    : entry.getValue().toString();
-            sql = sql.replace("#{" + entry.getKey() + "}", value);
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                sql = sql.replace("#{" + entry.getKey() + "}", "'" + value + "'");
+            } else if (value instanceof LocalDateTime) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String formatted = ((LocalDateTime) value).format(formatter);
+                sql = sql.replace("#{" + entry.getKey() + "}", "'" + formatted + "'");
+            } else {
+                sql = sql.replace("#{" + entry.getKey() + "}", value.toString());
+            }
         }
         return sql;
     }

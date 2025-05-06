@@ -12,6 +12,9 @@ import com.peitianbao.www.util.token.RedisUtil;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -41,13 +44,14 @@ public class CouponOrderService {
     /**
      * 创建秒杀订单
      */
-    public boolean createCouponOrder(long orderId,Integer couponId, Integer userId) {
+    public boolean createCouponOrder(long orderId, Integer couponId, Integer userId) {
         CouponOrder order = new CouponOrder(orderId, couponId, userId);
 
         boolean result = couponOrderDao.createCouponOrder(order);
         if (result) {
-            String cacheKey = ORDER_INFO_PREFIX + orderId;
-            RedisUtil.set(cacheKey, gson.toJson(order), getRandomExpireTime());
+            refreshOrderCache(orderId);
+            refreshUserOrdersCache(userId);
+            refreshCouponUsersCache(couponId);
             return true;
         } else {
             throw new VoucherException("创建订单失败");
@@ -142,5 +146,47 @@ public class CouponOrderService {
      */
     private int getRandomExpireTime() {
         return BASE_CACHE_EXPIRE_SECONDS + new Random().nextInt(RANDOM_EXPIRE_OFFSET);
+    }
+
+    /**
+     * 主动刷新某个订单的缓存
+     */
+    public void refreshOrderCache(long orderId) {
+        String cacheKey = ORDER_INFO_PREFIX + orderId;
+        CouponOrder order = couponOrderDao.getCouponOrderInfo(orderId);
+        if (order != null) {
+            RedisUtil.set(cacheKey, gson.toJson(order), getRandomExpireTime());
+        } else {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+        }
+    }
+
+    /**
+     * 主动刷新某个用户的订单缓存
+     */
+    public void refreshUserOrdersCache(Integer userId) {
+        String cacheKey = USER_COUPON_ORDERS_PREFIX + userId;
+        List<CouponOrder> orders = couponOrderDao.getUserCouponOrders(userId);
+        if (orders != null && !orders.isEmpty()) {
+            RedisUtil.set(cacheKey, gson.toJson(orders), getRandomExpireTime());
+        } else {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+        }
+    }
+
+    /**
+     * 主动刷新某个优惠券的用户参与列表缓存
+     */
+    public void refreshCouponUsersCache(Integer couponId) {
+        String cacheKey = COUPON_USERS_ID_PREFIX + couponId;
+        List<CouponOrder> result = couponOrderDao.getCouponUsersId(couponId);
+        if (result != null && !result.isEmpty()) {
+            List<Integer> userIds = result.stream()
+                    .map(CouponOrder::getUserId)
+                    .collect(Collectors.toList());
+            RedisUtil.set(cacheKey, gson.toJson(userIds), getRandomExpireTime());
+        } else {
+            RedisUtil.set(cacheKey, "NOT_EXISTS", EMPTY_CACHE_EXPIRE_SECONDS);
+        }
     }
 }

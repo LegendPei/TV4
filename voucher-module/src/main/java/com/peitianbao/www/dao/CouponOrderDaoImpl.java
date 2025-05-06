@@ -29,7 +29,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
             params.put("userId", order.getUserId());
 
             LoggingFramework.info("尝试插入秒杀订单：" + order.getOrderId());
-            int result = sqlSession.executeUpdate("CouponOrderMapper.insertCouponOrder", params);
+            int result = sqlSession.executeUpdate("VoucherMapper.insertCouponOrder", params);
             LoggingFramework.info("秒杀订单插入成功：" + order.getOrderId());
             return result!=0;
         } catch (Exception e) {
@@ -47,7 +47,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
 
             LoggingFramework.info("尝试查询订单 ID：" + orderId);
 
-            return sqlSession.executeQueryForObject("CouponOrderMapper.selectCouponOrderById", params, CouponOrder.class);
+            return sqlSession.executeQueryForObject("VoucherMapper.selectCouponOrderById", params, CouponOrder.class);
         } catch (Exception e) {
             LoggingFramework.severe("查询订单失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -64,8 +64,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
 
             LoggingFramework.info("尝试统计用户参与次数：用户ID=" + userId + ", 活动ID=" + couponId);
 
-            Integer count = sqlSession.executeQueryForObject("CouponOrderMapper.countUserParticipation", params, Integer.class);
-            return count != null ? count : 0;
+            return sqlSession.executeQueryForInt("VoucherMapper.countUserParticipation", params);
         } catch (Exception e) {
             LoggingFramework.severe("统计用户参与次数失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -81,7 +80,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
 
             LoggingFramework.info("尝试查询用户的订单，ID：" + userId);
 
-            return sqlSession.executeQueryForList("CouponOrderMapper.getUserCouponOrders", params, CouponOrder.class);
+            return sqlSession.executeQueryForList("VoucherMapper.getUserCouponOrders", params, CouponOrder.class);
         } catch (Exception e) {
             LoggingFramework.severe("查询用户订单失败：" + e.getMessage());
             LoggingFramework.logException(e);
@@ -97,7 +96,7 @@ public class CouponOrderDaoImpl implements CouponOrderDao {
 
             LoggingFramework.info("尝试查询参与该活动的用户id,活动ID：" + couponId);
 
-            return sqlSession.executeQueryForList("CouponOrderMapper.getCouponUsersId", params, CouponOrder.class);
+            return sqlSession.executeQueryForList("VoucherMapper.getCouponUsersId", params, CouponOrder.class);
         } catch (Exception e) {
             LoggingFramework.severe("查询参与该活动的用户id失败：" + e.getMessage());
             LoggingFramework.logException(e);

@@ -36,7 +36,7 @@ public class CouponDaoImpl implements CouponDao {
             params.put("shopId", coupon.getShopId());
 
             LoggingFramework.info("尝试插入秒杀活动：" + coupon.getCouponName());
-            int result = sqlSession.executeUpdate("CouponMapper.insertCoupon", params);
+            int result = sqlSession.executeUpdate("VoucherMapper.insertCoupon", params);
             LoggingFramework.info("秒杀活动插入成功：" + coupon.getCouponName());
             return result!=0;
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class CouponDaoImpl implements CouponDao {
             params.put("couponId", couponId);
 
             LoggingFramework.info("尝试查询活动 ID：" + couponId);
-            Coupon coupon = sqlSession.executeQueryForObject("CouponMapper.selectCouponById", params, Coupon.class);
+            Coupon coupon = sqlSession.executeQueryForObject("VoucherMapper.selectCouponById", params, Coupon.class);
 
             if (coupon != null) {
                 LoggingFramework.info("查询到活动：" + coupon.getCouponName());
@@ -75,7 +75,7 @@ public class CouponDaoImpl implements CouponDao {
             params.put("couponId", couponId);
 
             LoggingFramework.info("尝试更新活动卷现有数数：couponId = " + couponId);
-            int result = sqlSession.executeUpdate("CouponMapper.lowNowCount", params);
+            int result = sqlSession.executeUpdate("VoucherMapper.lowNowCount", params);
             if (result > 0) {
                 LoggingFramework.info("活动卷现有数更新成功：couponId = " + couponId);
             } else {
@@ -96,7 +96,7 @@ public class CouponDaoImpl implements CouponDao {
             params.put("couponId", couponId);
 
             LoggingFramework.info("尝试回滚活动卷现有数数：couponId = " + couponId);
-            int result = sqlSession.executeUpdate("CouponMapper.rollbackCoupon", params);
+            int result = sqlSession.executeUpdate("VoucherMapper.rollbackCoupon", params);
             if (result > 0) {
                 LoggingFramework.info("活动卷现有数回滚成功：couponId = " + couponId);
             } else {
@@ -114,7 +114,7 @@ public class CouponDaoImpl implements CouponDao {
     public List<Coupon> getAllCoupons() {
         try {
             Map<String, Object> params = new HashMap<>();
-            return sqlSession.executeQueryForList("CouponMapper.getAllCoupons",params,Coupon.class);
+            return sqlSession.executeQueryForList("VoucherMapper.getAllCoupons",params,Coupon.class);
         } catch (Exception e) {
             LoggingFramework.severe("搜索活动失败：" + e.getMessage());
             LoggingFramework.logException(e);
