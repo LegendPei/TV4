@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>秒杀活动详情</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-flashsale.html" class="back-btn">返回秒杀活动列表</a>
+
+<!-- 页面内容 -->
+<div class="form-container blog-detail-container">
+    <h2 id="coupon-name">加载中...</h2>
+
+    <div class="info-group">
+        <p><strong>类型：</strong><span id="coupon-type">-</span></p>
+        <p><strong>最低消费金额：</strong><span id="coupon-min-spend">-</span></p>
+        <p><strong>总库存：</strong><span id="coupon-total-stock">0</span></p>
+        <p><strong>剩余库存：</strong><span id="coupon-available-stock">0</span></p>
+        <p><strong>最大领取数：</strong><span id="coupon-max-user">0</span></p>
+        <p><strong>开始时间：</strong><span id="coupon-start-time">-</span></p>
+        <p><strong>结束时间：</strong><span id="coupon-end-time">-</span></p>
+        <p><strong>使用对象商铺：</strong><span id="coupon-shop-id">-</span></p>
+    </div>
+</div>
+<!-- 倒计时区域 -->
+<div class="countdown-container">
+    <p id="countdown-text">加载中...</p>
+</div>
+
+<!-- 操作按钮区域 -->
+<div class="coupon-actions" id="coupon-actions">
+    <!-- 动态插入按钮或提示 -->
+</div>
+<script src="../../js/user/user-coupon-detail.js"></script>
+
+</body>
+</html>

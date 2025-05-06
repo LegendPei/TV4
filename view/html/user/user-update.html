@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>更新用户信息</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-index.html" class="back-btn">返回首页</a>
+
+<!-- 更新表单容器 -->
+<div class="form-container">
+    <h2>更新用户信息</h2>
+
+    <form id="update-form">
+        <!-- 用户账号 -->
+        <label>
+            账号：
+            <input type="text" id="userAccount" required />
+        </label>
+
+        <!-- 密码 -->
+        <label>
+            新密码（可选）：
+            <input type="password" id="userPassword" />
+        </label>
+
+        <!-- 昵称 -->
+        <label>
+            昵称：
+            <input type="text" id="userName" required />
+        </label>
+
+        <!-- 提交按钮 -->
+        <button type="submit" class="btn">提交更新</button>
+    </form>
+</div>
+
+<script src="../../js/user/user-update.js"></script>
+
+</body>
+</html>

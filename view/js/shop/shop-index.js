@@ -74,7 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const confirmed = confirm("您确定要退出登录吗？");
             if (confirmed) {
-                logout();
+                localStorage.removeItem("shopId");
+                localStorage.removeItem("token");
+                localStorage.removeItem("refreshToken");
+                window.location.href = "../index.html";
             }
         });
     }

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>用户秒杀活动</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-index.html" class="back-btn">返回首页</a>
+
+<!-- 分类标签 -->
+<div class="tab-buttons">
+    <button id="tab-expired" class="btn small-btn">已过期</button>
+    <button id="tab-ongoing" class="btn small-btn active">正在进行</button>
+    <button id="tab-upcoming" class="btn small-btn">即将开始</button>
+</div>
+
+<!-- 秒杀活动列表容器 -->
+<div class="form-container voucher-list-container">
+    <table class="voucher-table">
+        <thead>
+        <tr>
+            <th>优惠券名称</th>
+            <th>类型</th>
+            <th>每人限领</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="voucher-list">
+        <!-- 动态插入活动项 -->
+        </tbody>
+    </table>
+</div>
+
+<script src="../../js/user/user-flashsale.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>商铺详情</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-index.html" class="back-btn">返回首页</a>
+
+<!-- 商铺信息展示区域 -->
+<div class="form-container shop-detail-container">
+    <div class="shop-actions">
+        <!-- 新增的评论按钮 -->
+        <a href="#" id="btn-comment-shop" class="btn small-btn comment-btn">发表评论</a>
+        <a href="#" id="view-posts-btn" class="btn small-btn">查看动态</a>
+    </div>
+    <h2 id="shop-name">加载中...</h2>
+
+    <div class="info-group">
+
+        <p>
+            <strong>地址：</strong><span id="shopAddress">-</span>
+        </p>
+        <p>
+            <strong>粉丝数：</strong><span id="shopFollowers">0</span>
+        </p>
+        <p>
+            <strong>点赞数：</strong><span id="shopLikes">0</span>
+        </p>
+        <p>
+            <strong>简介：</strong>
+            <span id="shopInfo">-</span>
+        </p>
+    </div>
+
+    <!-- 新增：商铺操作按钮 -->
+    <div class="action-buttons">
+        <button id="btn-like-shop" class="btn small-btn">点赞该商铺</button>
+        <button id="btn-follow-shop" class="btn small-btn">关注该商铺</button>
+        <button id="btn-unfollow-shop" class="btn small-btn danger-btn">取消关注</button>
+    </div>
+</div>
+<div class="comment-form-container" id="comment-form-container" style="display: none;">
+    <form id="comment-form">
+        <label>
+            评论内容：
+            <textarea id="commentContent" rows="3" required></textarea>
+        </label>
+        <button type="submit" class="btn small-btn">提交评论</button>
+    </form>
+</div>
+<!-- 评论区域 -->
+<div class="comments-section">
+    <h3>商铺评论</h3>
+
+    <!-- 排序按钮组 -->
+    <div class="sort-buttons">
+        <button id="sort-time" class="btn small-btn active">按时间排序</button>
+        <button id="sort-likes" class="btn small-btn">按点赞数排序</button>
+    </div>
+
+    <!-- 评论列表 -->
+    <ul id="comments-list" class="list-group">
+        <!-- 动态插入评论项 -->
+    </ul>
+</div>
+<script src="../../js/user/user-shop.js"></script>
+
+</body>
+</html>

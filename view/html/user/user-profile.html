@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人主页</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-index.html" class="back-btn">返回首页</a>
+
+<!-- 用户信息展示 -->
+<div class="form-container profile-container">
+    <h2>个人资料</h2>
+
+    <div class="info-group">
+        <p><strong>用户名：</strong><span id="profile-username">加载中...</span></p>
+
+        <p>
+            <strong>关注商铺数：</strong><span id="profile-following-shops">0</span>
+            <a href="user-follow-shops.html?userId=${numericUserId}" class="btn small-btn">查看关注的商铺</a>
+        </p>
+
+        <p>
+            <strong>粉丝数：</strong><span id="profile-followers">0</span>
+            <a href="user-followers.html?userId=${numericUserId}" class="btn small-btn">查看粉丝</a>
+        </p>
+
+        <p>
+            <strong>关注用户数：</strong><span id="profile-following-users">0</span>
+            <a href="user-follow-users.html?userId=${numericUserId}" class="btn small-btn">查看关注的人</a>
+        </p>
+    </div>
+</div>
+
+<script src="../../js/user/user-profile.js"></script>
+
+</body>
+</html>

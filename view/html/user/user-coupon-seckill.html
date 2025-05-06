@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>支付界面</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+  <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="#" onclick="window.history.back()" class="back-btn">返回详情页</a>
+
+<!-- 支付容器 -->
+<div class="payment-container">
+  <!-- 二维码图片 -->
+  <img src="../../images/pay.jpg" alt="支付二维码" class="qrcode-img">
+
+  <!-- 倒计时区域 -->
+  <p id="payment-countdown">剩余支付时间：加载中...</p>
+
+  <!-- 操作按钮 -->
+  <div class="payment-buttons">
+    <button id="btn-paid" class="btn paid-btn">已支付</button>
+    <button id="btn-cancel" class="btn cancel-btn">不想支付了</button>
+  </div>
+</div>
+
+<script src="../../js/user/user-coupon-seckill.js"></script>
+
+</body>
+</html>

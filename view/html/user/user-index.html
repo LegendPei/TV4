@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>用户首页</title>
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+  <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 右上角操作按钮 -->
+<div class="top-right-buttons">
+  <a href="#" id="logout-btn" class="btn small-btn danger-btn">退出登录</a>
+  <a href="user-update.html" class="btn small-btn">更新信息</a>
+  <a href="#" id="delete-user-btn" class="btn small-btn danger-btn">注销账号</a>
+</div>
+<!-- 新增的导航按钮 -->
+<div class="feature-buttons">
+  <a href="user-flashsale.html" class="btn feature-btn">秒杀活动</a>
+  <a href="user-posts.html" class="btn feature-btn">动态专区</a>
+  <a href="#" id="view-profile-btn" class="btn feature-btn">个人主页</a>
+</div>
+<!-- 页面标题 -->
+<h2 id="page-title">正在加载商铺列表...</h2>
+
+<!-- 排序按钮组 -->
+<div class="sort-buttons-vertical">
+  <button id="sort-likes" class="btn small-btn active">按点赞排序</button>
+  <button id="sort-followers" class="btn small-btn">按粉丝排序</button>
+</div>
+
+<!-- 商铺列表容器 -->
+<div class="form-container shop-list-container">
+  <table class="shop-table">
+    <thead>
+    <tr>
+      <th>商铺名称</th>
+      <th>点赞数</th>
+      <th>粉丝数</th>
+      <th>操作</th>
+    </tr>
+    </thead>
+    <tbody id="shop-list">
+    <!-- 动态插入商铺行 -->
+    </tbody>
+  </table>
+</div>
+
+<script src="../../js/user/user-index.js"></script>
+
+</body>
+</html>
