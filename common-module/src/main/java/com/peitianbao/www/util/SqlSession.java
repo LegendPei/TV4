@@ -20,7 +20,7 @@ public class SqlSession implements AutoCloseable {
     private final Connection connection;
     private final boolean isExternalConnection;
 
-    // 老构造函数：保持兼容性，用于不使用 Seata 的模块
+    //用于不使用Seata的模块
     public SqlSession(ConnectionPool connectionPool) throws InterruptedException, SQLException {
         this.connectionPool = connectionPool;
         this.dataSource = null;
@@ -28,7 +28,7 @@ public class SqlSession implements AutoCloseable {
         this.isExternalConnection = false;
     }
 
-    // 新构造函数：用于支持 Seata 的模块
+    //用于支持Seata的模块
     public SqlSession(DataSource dataSource) throws SQLException {
         this.connectionPool = null;
         this.dataSource = dataSource;

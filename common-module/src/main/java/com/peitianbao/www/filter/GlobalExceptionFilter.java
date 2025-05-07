@@ -16,11 +16,6 @@ import java.io.PrintWriter;
 /**
  * @author leg
  */
-import com.google.gson.Gson;
-import javax.servlet.*;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.PrintWriter;
 
 @WebFilter("/*")
 public class GlobalExceptionFilter implements Filter {
@@ -29,15 +24,15 @@ public class GlobalExceptionFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException {
         try {
-            // 继续执行后续的过滤器或Servlet
+            //继续执行后续的过滤器或Servlet
             chain.doFilter(request, response);
         } catch (ServiceException e) {
-            // 捕获业务异常
+            //捕获业务异常
             handleException(response, HttpServletResponse.SC_BAD_REQUEST, 400, e.getMessage());
         } catch (Exception e) {
-            // 捕获未知异常
+            //捕获未知异常
             LoggingFramework.severe("GlobalExceptionFilter 捕获了一个未知异常: " + e.getMessage());
-            e.printStackTrace(); // 打印完整的堆栈信息
+            e.printStackTrace();
             LoggingFramework.logException(e);
             handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 500, "网络出错");
         }
@@ -49,14 +44,14 @@ public class GlobalExceptionFilter implements Filter {
         httpResponse.setStatus(httpStatus);
         httpResponse.setContentType("application/json;charset=UTF-8");
 
-        // 构造统一的错误响应
+        //构造统一的错误响应
         Result<?> result = Result.error(errorCode, errorMessage);
 
-        // 使用全局单例 Gson 实例
+        //使用全局单例 Gson 实例
         Gson gson = GsonFactory.getGSON();
         String jsonResponse = gson.toJson(result);
 
-        // 写入响应
+        //写入响应
         PrintWriter writer = response.getWriter();
         writer.write(jsonResponse);
         writer.flush();

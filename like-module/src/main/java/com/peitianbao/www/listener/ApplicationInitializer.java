@@ -32,7 +32,7 @@ public class ApplicationInitializer implements ServletContextListener {
                 System.out.println("ApplicationInitializer have begin");
                 return;
             }
-            // 加载配置文件
+            //加载配置文件
             Properties properties = LoadProperties.load("application.properties");
             for (String key : properties.stringPropertyNames()) {
                 System.setProperty(key, properties.getProperty(key));
@@ -42,39 +42,39 @@ public class ApplicationInitializer implements ServletContextListener {
 
             SeataClientBootstrap.init(applicationId, txServiceGroup);
 
-            System.out.println("✅ Seata 客户端已成功初始化");
+            System.out.println("Seata 客户端已成功初始化");
 
-            // 初始化连接池
+            //初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
 
-            // 包装为标准数据源
+            //包装为标准数据源
             DataSource rawDataSource = new PooledDataSource(connectionPool);
 
-            // 是否启用 Seata？
+            //是否启用Seata？
             boolean enableSeata = Boolean.parseBoolean(System.getProperty("seata.enabled", "false"));
             DataSource finalDataSource = enableSeata
                     ? SeataClientBootstrap.wrapDataSource(rawDataSource)
                     : rawDataSource;
 
-            // 注册到容器中（名称不变，类型升级为 DataSource）
+            //注册到容器中
             BeanFactory.registerBean(DataSource.class, "connectionPool", finalDataSource);
 
-            // 创建 SqlSession 并注册到容器
+            //创建SqlSession并注册到容器
             SqlSession sqlSession = new SqlSession(finalDataSource);
             BeanFactory.registerBean(SqlSession.class, "sqlSession", sqlSession);
 
-            // 初始化框架，扫描并注册所有 Controller、Service 和 Dao
+            //初始化框架，扫描并注册所有Controller、Service和Dao
             BeanFactory.initialize("com.peitianbao.www");
 
-            // 获取 ServletContext
+            //获取ServletContext
             ServletContext context = sce.getServletContext();
 
-            // 初始化 Dubbo 配置
+            //初始化Dubbo配置
             initializeDubbo(context);
 
-            // 处理 @DubboReference 注解的注入
+            //处理@DubboReference注解的注入
             processDubboReferenceAnnotations(context);
-            // 标记为已初始化
+            //标记为已初始化
             initialized = true;
         } catch (Exception e) {
             throw new RuntimeException("应用初始化失败", e);
@@ -106,21 +106,21 @@ public class ApplicationInitializer implements ServletContextListener {
             throw new RuntimeException("Dubbo 配置缺失: applicationName 或 registryAddress 为空");
         }
 
-        // 初始化 ApplicationConfig
+        //初始化ApplicationConfig
         ApplicationConfig applicationConfig = new ApplicationConfig();
         applicationConfig.setName(applicationName);
 
-        // 初始化 RegistryConfig
+        //初始RegistryConfig
         RegistryConfig registryConfig = new RegistryConfig();
         registryConfig.setAddress(registryAddress);
 
-        // 初始化 DubboBootstrap 并注册消费者
+        //初始化DubboBootstrap并注册消费者
         DubboBootstrap bootstrap = DubboBootstrap.getInstance();
         bootstrap.application(applicationConfig)
                 .registry(registryConfig)
                 .start();
 
-        // 从 web.xml 中读取超时时间配置
+        //从web.xml中读取超时时间配置
         String timeoutStr = context.getInitParameter("dubbo.consumer.timeout");
         if (timeoutStr != null && !timeoutStr.isEmpty()) {
             int timeout = Integer.parseInt(timeoutStr);
@@ -166,21 +166,21 @@ public class ApplicationInitializer implements ServletContextListener {
 
         System.out.println("Injecting @DubboReference for field: " + field.getName() + ", service: " + serviceName);
 
-        // 使用 DubboBootstrap 创建远程服务代理
+        //使用DubboBootstrap创建远程服务代理
         ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
         referenceConfig.setInterface(fieldType);
         referenceConfig.setVersion(version);
 
-        // 设置注册中心地址
+        //设置注册中心地址
         String registryAddress = context.getInitParameter("dubbo.registry.address");
         RegistryConfig registryConfig = new RegistryConfig();
         registryConfig.setAddress(registryAddress);
         referenceConfig.setRegistry(registryConfig);
 
-        // 获取远程服务代理对象
+        //获取远程服务代理对象
         Object proxyInstance = referenceConfig.get();
 
-        // 注入代理对象
+        //注入代理对象
         field.set(bean, proxyInstance);
     }
 }

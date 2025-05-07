@@ -47,10 +47,10 @@ public class ApplicationInitializer implements ServletContextListener {
             System.out.println("Seata 客户端已成功初始化");
             //初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
-            // 包装为标准数据源
+            //包装为标准数据源
             DataSource rawDataSource = new PooledDataSource(connectionPool);
 
-            // 是否启用 Seata？
+            //是否启用Seata？
             boolean enableSeata = Boolean.parseBoolean(System.getProperty("seata.enabled", "false"));
             DataSource finalDataSource = enableSeata
                     ? SeataClientBootstrap.wrapDataSource(rawDataSource)
@@ -107,7 +107,7 @@ public class ApplicationInitializer implements ServletContextListener {
         System.out.println("begin to Dubbo service");
 
         try {
-            // 创建 Dubbo 配置对象
+            //创建Dubbo配置对象
             ApplicationConfig applicationConfig = new ApplicationConfig();
             applicationConfig.setName(applicationName);
 
@@ -118,20 +118,20 @@ public class ApplicationInitializer implements ServletContextListener {
             protocolConfig.setName(protocolName);
             protocolConfig.setPort(protocolPort);
 
-            // 初始化 DubboBootstrap
+            //初始化DubboBootstrap
             DubboBootstrap bootstrap = DubboBootstrap.getInstance();
             bootstrap.application(applicationConfig)
                     .registry(registryConfig)
                     .protocol(protocolConfig);
 
-            // 扫描指定包路径下的类
+            //扫描指定包路径下的类
             List<Class<?>> classes = ClassScanner.getClasses("com.peitianbao.www.service");
 
             for (Class<?> clazz : classes) {
                 if (clazz.isAnnotationPresent(DubboService.class)) {
                     System.out.println("find DubboService: " + clazz.getName());
 
-                    // 获取接口类型
+                    //获取接口类型
                     Class<?>[] interfaces = clazz.getInterfaces();
                     if (interfaces.length == 0) {
                         throw new RuntimeException("找不到接口: " + clazz.getName());
@@ -139,25 +139,25 @@ public class ApplicationInitializer implements ServletContextListener {
 
                     Class<?> interfaceClass = interfaces[0];
 
-                    // 从 BeanFactory 获取 Service 实例
+                    //从BeanFactory获取Service实例
                     Object serviceInstance = BeanFactory.getBean(clazz.getSimpleName());
                     if (serviceInstance == null) {
                         throw new RuntimeException("Service instance not found in BeanFactory: " + clazz.getName());
                     }
 
-                    // 创建 ServiceConfig 并注册服务
+                    //创建ServiceConfig并注册服务
                     ServiceConfig<Object> service = new ServiceConfig<>();
                     service.setInterface(interfaceClass);
                     service.setRef(serviceInstance);
                     service.setVersion("1.0.0");
 
-                    // 将服务添加到 DubboBootstrap
+                    //将服务添加到DubboBootstrap
                     bootstrap.service(service);
                     System.out.println("成功注册 Dubbo 服务: " + interfaceClass.getName());
                 }
             }
 
-            // 启动 DubboBootstrap
+            //启动DubboBootstrap
             bootstrap.start();
             System.out.println("DubboBootstrap 成功启动并连接到 Nacos");
         } catch (Exception e) {

@@ -34,7 +34,7 @@ public class ApplicationInitializer implements ServletContextListener {
                 return;
             }
 
-            // 加载配置文件
+            //加载配置文件
             Properties properties = LoadProperties.load("application.properties");
             for (String key : properties.stringPropertyNames()) {
                 System.setProperty(key, properties.getProperty(key));
@@ -48,10 +48,10 @@ public class ApplicationInitializer implements ServletContextListener {
             System.out.println("Seata 客户端已成功初始化");
             //初始化连接池
             ConnectionPool connectionPool = new ConnectionPool("application.properties");
-            // 包装为标准数据源
+            //包装为标准数据源
             DataSource rawDataSource = new PooledDataSource(connectionPool);
 
-            // 是否启用 Seata？
+            //是否启用Seata？
             boolean enableSeata = Boolean.parseBoolean(System.getProperty("seata.enabled", "false"));
             DataSource finalDataSource = enableSeata
                     ? SeataClientBootstrap.wrapDataSource(rawDataSource)
@@ -62,13 +62,13 @@ public class ApplicationInitializer implements ServletContextListener {
             SqlSession sqlSession = new SqlSession(finalDataSource);
             BeanFactory.registerBean(SqlSession.class, "sqlSession", sqlSession);
 
-            // 初始化框架，扫描并注册所有 Controller、Service 和 Dao
+            //初始化框架，扫描并注册所有Controller、Service和Dao
             BeanFactory.initialize("com.peitianbao.www");
 
-            // 获取 ServletContext
+            //获取ServletContext
             ServletContext context = sce.getServletContext();
 
-            // 使用统一的 ApplicationConfig
+            //使用统一的ApplicationConfig
             String applicationName = context.getInitParameter("dubbo.application.name");
             String registryAddress = context.getInitParameter("dubbo.registry.address");
             String protocolName = context.getInitParameter("dubbo.protocol.name");
@@ -80,7 +80,7 @@ public class ApplicationInitializer implements ServletContextListener {
 
             int protocolPort = Integer.parseInt(protocolPortStr);
 
-            // 创建统一的 ApplicationConfig
+            //创建统一的ApplicationConfig
             ApplicationConfig applicationConfig = new ApplicationConfig();
             applicationConfig.setName(applicationName);
 
@@ -91,13 +91,13 @@ public class ApplicationInitializer implements ServletContextListener {
             protocolConfig.setName(protocolName);
             protocolConfig.setPort(protocolPort);
 
-            // 初始化 DubboBootstrap（只调用一次 start()）
+            //初始化DubboBootstrap
             DubboBootstrap bootstrap = DubboBootstrap.getInstance();
             bootstrap.application(applicationConfig)
                     .registry(registryConfig)
                     .protocol(protocolConfig);
 
-            // 注册本地服务（Provider）
+            //注册本地服务
             List<Class<?>> serviceClasses = ClassScanner.getClasses("com.peitianbao.www.service");
             for (Class<?> clazz : serviceClasses) {
                 if (clazz.isAnnotationPresent(DubboService.class)) {
@@ -116,23 +116,23 @@ public class ApplicationInitializer implements ServletContextListener {
                     service.setRef(serviceImpl);
                     service.setVersion("1.0.0");
 
-                    // 注册服务到 DubboBootstrap
+                    //注册服务到DubboBootstrap
                     bootstrap.service(service);
                     System.out.println("成功注册服务: " + interfaces[0].getName());
                 }
             }
 
-            // 引用远程服务（Consumer）
+            //引用远程服务
             initializeDubboReference(context, bootstrap);
 
-            // 处理 Controller 层中的 @DubboReference 注解
+            //处理Controller层中的@DubboReference注解
             processDubboReferenceAnnotations(context);
 
-            // 启动 DubboBootstrap（只启动一次）
+            //启动DubboBootstrap
             bootstrap.start();
             System.out.println("DubboBootstrap 成功启动并连接到 Nacos");
 
-            // 标记为已初始化
+            //标记为已初始化
             initialized = true;
 
         } catch (Exception e) {
@@ -156,7 +156,7 @@ public class ApplicationInitializer implements ServletContextListener {
             referenceConfig.setCheck(false);
             referenceConfig.setLazy(true);
 
-            // 设置注册中心地址
+            //设置注册中心地址
             String registryAddress = context.getInitParameter("dubbo.registry.address");
             if (registryAddress != null && !registryAddress.isEmpty()) {
                 RegistryConfig registryConfig = new RegistryConfig();
@@ -164,7 +164,7 @@ public class ApplicationInitializer implements ServletContextListener {
                 referenceConfig.setRegistry(registryConfig);
             }
 
-            // 添加引用到 DubboBootstrap
+            //添加引用到DubboBootstrap
             bootstrap.reference(referenceConfig);
             System.out.println("成功引用远程服务: " + serviceName);
         }
@@ -218,7 +218,7 @@ public class ApplicationInitializer implements ServletContextListener {
         registryConfig.setAddress(registryAddress);
         referenceConfig.setRegistry(registryConfig);
 
-        // 获取代理对象
+        //获取代理对象
         Object proxyInstance = referenceConfig.get();
         field.set(bean, proxyInstance);
     }

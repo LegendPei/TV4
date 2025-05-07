@@ -41,21 +41,20 @@ public class MapperProxy implements InvocationHandler {
         ResultSet resultSet = null;
 
         try {
-            // 从连接池获取连接
+            //从连接池获取连接
             connection = connectionPool.getConnection();
             preparedStatement = connection.prepareStatement(sql);
 
-            // 设置参数
+            //设置参数
             if (args != null) {
                 for (int i = 0; i < args.length; i++) {
                     preparedStatement.setObject(i + 1, args[i]);
                 }
             }
 
-            // 执行 SQL
+            //执行SQL
             if (methodName.startsWith("select")) {
                 resultSet = preparedStatement.executeQuery();
-                // TODO: 将 ResultSet 转换为实体对象或列表
                 return null;
             } else {
                 return preparedStatement.executeUpdate();

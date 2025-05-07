@@ -16,14 +16,14 @@ public class SeataClientBootstrap {
 
     public static void init(String applicationId, String txServiceGroup) {
         try {
-            // 显式加载配置
-            ConfigurationFactory.getInstance(); // 触发配置加载
+            //显式加载配置
+            ConfigurationFactory.getInstance();
 
-            // 初始化 TM
+            //初始化TM
             TransactionManager tm = new DefaultTransactionManager();
             TransactionManagerHolder.set(tm);
 
-            // 初始化 RM
+            //初始化RM
             io.seata.rm.DefaultResourceManager.get();
             io.seata.rm.RMClient.init(applicationId, txServiceGroup);
             TMClient.init(applicationId, txServiceGroup);
