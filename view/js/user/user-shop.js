@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnFollowShop = document.getElementById("btn-follow-shop");
     const btnUnfollowShop = document.getElementById("btn-unfollow-shop");
 
+    const sortTimeBtn = document.getElementById("sort-time");
+    const sortLikesBtn = document.getElementById("sort-likes");
+
+    let currentSortType = "time"; // 默认排序方式为 time
+
     const token = localStorage.getItem("token");
     const userId = localStorage.getItem("userId");
 
@@ -57,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 shopLikesEl.textContent = shop.shopLikes || 0;
 
                 // 加载评论
-                loadComments("time");
+                loadComments(currentSortType);
 
             } else {
                 alert("获取商铺详情失败：" + (data.message || "数据异常"));
@@ -198,6 +203,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    /**
+     * 设置排序按钮事件绑定函数
+     */
+    function setupSortButton(button, type) {
+        button.addEventListener("click", () => {
+            [sortTimeBtn, sortLikesBtn].forEach(btn => btn.classList.remove("active"));
+            button.classList.add("active");
+            currentSortType = type;
+            commentsListEl.innerHTML = "<li class='list-group-item'>加载中...</li>";
+            loadComments(type);
+        });
+    }
+
+    setupSortButton(sortTimeBtn, "time");
+    setupSortButton(sortLikesBtn, "likes");
     /**
      * 点赞商铺
      */

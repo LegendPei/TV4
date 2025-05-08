@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>发表动态</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="user-posts.html" class="back-btn">返回动态专区</a>
+
+<!-- 发布动态表单 -->
+<div class="form-container create-post-form">
+    <h2>发表新的动态</h2>
+
+    <form id="create-blog-form">
+        <label>
+            动态类型：
+            <select id="blogType" required>
+                <option value="">请选择类型</option>
+                <option value="1">美食推荐</option>
+                <option value="2">商铺推荐</option>
+                <option value="3">秒杀分享</option>
+            </select>
+        </label>
+
+        <!-- 商铺选择器 -->
+        <div id="shop-selector" class="form-group hidden">
+            <label for="shop-select">选择商铺：</label>
+            <select id="shop-select" class="form-control"></select>
+        </div>
+
+        <!-- 秒杀活动选择器 -->
+        <div id="voucher-selector" class="form-group hidden">
+            <label for="coupon-select">选择秒杀活动：</label>
+            <select id="coupon-select" class="form-control"></select>
+        </div>
+
+        <label>
+            动态标题：
+            <input type="text" id="blogName" required>
+        </label>
+
+        <label>
+            动态内容：
+            <textarea id="blogContent" rows="5" required></textarea>
+        </label>
+
+        <label>
+            媒体文件（可选）：
+            <input type="file" id="mediaFile">
+            <span id="upload-status" style="font-size: 14px; color: #666;">未选择文件</span>
+        </label>
+
+        <button type="submit" class="btn primary-btn">发布动态</button>
+    </form>
+</div>
+
+<script src="../../js/user/user-createpost.js"></script>
+
+</body>
+</html>

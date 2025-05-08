@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.className = "list-group-item";
 
                     item.innerHTML = `
-                        <a href="user-shop.html?shopId=${shop.shopId}" class="btn small-btn">${shop.shopName}</a>
+                        <a href="user-shop.html?shopId=${shopId}" class="btn small-btn">${shop.shopName}</a>
                         <p>${shop.shopInfo || "暂无简介"}</p>
                     `;
 

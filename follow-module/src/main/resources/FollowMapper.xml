@@ -15,7 +15,7 @@
             DELETE FROM
             user_follows
             WHERE
-            user_id = #{targetId}
+            user_id = #{targetId} AND
             follower_id = #{followerId}
         </delete>
 
@@ -23,7 +23,7 @@
             DELETE FROM
             shop_follows
             WHERE
-            shop_id = #{targetId}
+            shop_id = #{targetId} AND
             follower_id = #{followerId}
         </delete>
 

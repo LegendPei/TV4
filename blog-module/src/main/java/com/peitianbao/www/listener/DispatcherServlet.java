@@ -13,10 +13,13 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -120,7 +123,6 @@ public class DispatcherServlet extends HttpServlet {
         Annotation[][] parameterAnnotations = method.getParameterAnnotations();
         Object[] args = new Object[parameterTypes.length];
 
-        //使用全局单例
         Gson gson = GsonFactory.getGSON();
 
         for (int i = 0; i < parameterTypes.length; i++) {
@@ -136,7 +138,9 @@ public class DispatcherServlet extends HttpServlet {
             }
 
             if (hasRequestBody) {
-                String json = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(req.getInputStream(), StandardCharsets.UTF_8));
+                String json = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+
                 try {
                     args[i] = gson.fromJson(json, paramType);
                 } catch (Exception e) {

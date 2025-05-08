@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>创建秒杀活动</title>
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+
+<!-- 音乐图标 -->
+<a href="https://www.bilibili.com/video/BV1GJ411x7h7" target="_blank" class="music-icon">
+    <img src="../../images/music-icon.png" alt="音乐图标">
+</a>
+
+<!-- 返回按钮 -->
+<a href="shop-flashsale.html" class="back-btn">返回上一页</a>
+
+<!-- 表单容器 -->
+<div class="form-container create-coupon-form">
+    <h2>创建新的秒杀活动</h2>
+
+    <!-- 表单区域 -->
+    <form id="create-coupon-form">
+        <label>
+            优惠券名称：
+            <input type="text" id="couponName" required>
+        </label>
+
+        <label>
+            类型：
+            <select id="couponType" required>
+                <option value="">请选择类型</option>
+                <option value="1">立减券</option>
+                <option value="2">满减券</option>
+                <option value="3">折扣券</option>
+            </select>
+        </label>
+
+        <label id="discountAmountLabel">
+            折扣金额（分）/ 折扣力度（如 90 折）：
+            <input type="number" id="discountAmount" required>
+        </label>
+
+        <label>
+            最低消费金额（分）：
+            <input type="number" id="minSpend" min="0" required>
+        </label>
+
+        <label>
+            总库存：
+            <input type="number" id="totalStock" min="1" required>
+        </label>
+
+        <label>
+            开始时间：
+            <input type="datetime-local" id="startTime" required>
+        </label>
+
+        <label>
+            结束时间：
+            <input type="datetime-local" id="endTime" required>
+        </label>
+
+        <label>
+            每人限买张数：
+            <input type="number" id="maxPerUser" min="1" required>
+        </label>
+
+        <button type="submit" class="btn primary-btn">确认创建</button>
+    </form>
+</div>
+
+<script src="../../js/shop/shop-createcoupon.js"></script>
+
+</body>
+</html>
