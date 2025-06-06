@@ -41,4 +41,14 @@ public class VoucherId {
             throw new VoucherException("[ERROR] 全局ID生成失败：" + e.getMessage());
         }
     }
+    public static void parseVoucherId(long id) {
+        long count = id & (~(-1L << COUNT_BITS));
+        long timestamp = id >>> COUNT_BITS;
+
+        LocalDateTime beginTime = LocalDateTime.of(2025, 4, 28, 20, 20, 7);
+        LocalDateTime realTime = beginTime.plusSeconds(timestamp);
+
+        System.out.println("生成时间：" + realTime.format(DateTimeFormatter.ISO_DATE_TIME));
+        System.out.println("当日序号：" + count);
+    }
 }
